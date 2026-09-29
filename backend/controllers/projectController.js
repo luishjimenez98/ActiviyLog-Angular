@@ -24,7 +24,7 @@ export const getProject = async (req, res) => {
 export const createProject = async(req, res) =>{
     const {nombre,estado,fecha,horas_asignadas,horas_aumentadas}=req.body;
 
-    if (!nombre || !estado || !horas_asignadas) {
+    if (!nombre || !estado || horas_asignadas==null) {
         return res.status(400).json({ error: 'Los campos obligatorios deben ser completados.' });
     }
     try {
@@ -171,5 +171,58 @@ export const getProjectPersonal = async (req, res) => {
   } catch (error) {
     console.error('Error al buscar proyectos del personal:', error);
     return res.status(500).json({ error: 'Error interno al buscar en la base de datos.' });
+  }
+};
+
+//editar un proyecto/admin
+export const updateProject = async(req, res) =>{
+    const {id_proyecto,nombre,estado,fecha,horas_asignadas,codigo,horas_aumentadas}=req.body;
+
+    if (!nombre || !estado || horas_asignadas==null) {
+        return res.status(400).json({ error: 'Los campos obligatorios deben ser completados.' });
+    }
+    try {
+    // 1. Verificar si el proyecto ya existe
+    const [existingProject] = await pool.query(
+      'SELECT Id_proyecto FROM proyectos WHERE Id_proyecto = ?',
+      [id_proyecto]
+    );
+
+    if (existingProject.length === 0) {
+      return res.status(400).json({ error: 'El proyecto no esta registrado' });
+    }
+
+    // 2. Crear el codigo de acceso y verificar que no existe
+    let codigo_valido
+    if(codigo){
+      codigo_valido = await existing(codigo)
+    }
+    else{
+      codigo=Math.floor(1000 + Math.random() * 9000).toString();
+      codigo_valido = await existing(codigo)
+    }
+    
+
+    async function existing (code){
+        const [existingCode] = await pool.query(
+          `SELECT Id_proyecto FROM proyectos WHERE codigo_acceso = ? AND Id_proyecto != ?`,
+          [code, id_proyecto]
+        );
+        if(existingCode.length===0){
+          return code
+        }else{
+          return res.status(400).json({message: 'Codigo registrado en otro proyecto'})
+        }
+    }
+
+    const [updateProject] = await pool.query(
+      'update proyectos set nombre = ?, Id_estado = ?, fecha_inicio = ?, horas_asignadas = ?,horas_aumentadas = ?, codigo_acceso= ? where Id_proyecto = ?',
+      [nombre,estado,fecha,horas_asignadas,horas_aumentadas,codigo_valido,id_proyecto]
+    );
+    return res.status(200).json({updateProject});
+  }
+  catch (error) {
+    console.error('Error al actualizar el proyecto:', error);
+    return res.status(500).json({ error: 'Error interno en la base de datos.' });
   }
 };
