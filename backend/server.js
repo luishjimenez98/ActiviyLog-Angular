@@ -21,7 +21,7 @@ app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ONLINE' }));
 
-app.use('/auth', authRoutes);
+app.use('/', authRoutes);
 app.use('/admin', personalRoutes);
 app.use('/admin', projectsRoutes);
 app.use('/', projectsRoutes);
