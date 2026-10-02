@@ -6,8 +6,8 @@ import { getPersonal } from '../controllers/personalController.js';
 const router = Router();
 
 // Ruta exclusiva de Administrador para crear usuarios
-router.post('/personal', verifyAdmin, createPersonal);
+router.post('/', verifyAdmin, createPersonal);
 
-router.get('/personal',getPersonal);
+router.get('/',getPersonal);
 
 export default router;

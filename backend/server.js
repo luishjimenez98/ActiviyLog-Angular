@@ -22,13 +22,11 @@ app.use(express.json());
 app.get('/health', (req, res) => res.json({ status: 'ONLINE' }));
 
 app.use('/', authRoutes);
-app.use('/admin', personalRoutes);
-app.use('/admin', projectsRoutes);
-app.use('/', projectsRoutes);
-app.use('/' , personalRoutes);
-app.use('/', timeRoutes);
+app.use('/personal', personalRoutes);
+app.use('/proyectos', projectsRoutes);
+app.use('/horas', timeRoutes);
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Backend corriendo en http://localhost:${PORT}`);
 });

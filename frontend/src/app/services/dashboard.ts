@@ -19,13 +19,13 @@ export class DashboardService {
 
   // 1. Obtener la lista de proyectos desde el backend
   getProyectos(): Observable<any> {
-    return this.http.get(`${this.API_URL}/proyectos-personales`, { headers: this.getHeaders() });
+    return this.http.get(`${this.API_URL}/proyectos/personal`, { headers: this.getHeaders() });
   }
 
   // 2. Registrar horas en un proyecto
   registrarHoras(proyectoId: number, horas: number): Observable<any> {
     return this.http.post(
-      `${this.API_URL}/time`,
+      `${this.API_URL}/horas`,
       { 
         id_proyecto: proyectoId,
         horas: horas

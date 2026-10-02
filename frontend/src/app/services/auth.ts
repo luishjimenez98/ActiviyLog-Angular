@@ -12,6 +12,6 @@ export class AuthService {
   private API_URL = 'http://localhost:3001'; 
 
   login(credentials: { Email: string; Contrasena: string }): Observable<any> {
-    return this.http.post(`${this.API_URL}/login`, credentials);
+    return this.http.post(`${this.API_URL}/auth`, credentials);
   }
 }

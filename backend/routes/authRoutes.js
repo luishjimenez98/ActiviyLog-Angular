@@ -4,7 +4,7 @@ import { verifyToken } from '../middlewares/authmiddleware.js';
 
 const router = Router();
 
-router.post('/login', login);
+router.post('/auth', login);
 
 
 // Retorna los datos del usuario autenticado según su token
