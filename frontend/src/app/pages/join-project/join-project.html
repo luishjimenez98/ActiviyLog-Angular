@@ -14,13 +14,13 @@
       <nav class="flex-1 flex justify-evenly items-center max-w-[700px]">
         <button 
           (click)="navigate('/dashboard')"
-          class="px-6 py-2 text-[#FF4500] text-2xl font-medium font-['Inter'] transition-transform hover:scale-105 cursor-pointer"
+          class="px-6 py-2 text-[#2F3D47] text-2xl font-medium font-['Inter'] transition-transform hover:scale-105 cursor-pointer"
         >
           Proyectos
         </button>
         <button 
           (click)="navigate('/join')"
-          class="px-6 py-2 text-[#2F3D47] hover:text-[#FF4500] text-2xl font-medium font-['Inter'] transition-colors hover:scale-105 cursor-pointer"
+          class="px-6 py-2 text-[#FF4500] hover:text-[#FF4500] text-2xl font-medium font-['Inter'] transition-colors hover:scale-105 cursor-pointer"
         >
           Unirse
         </button>
@@ -34,26 +34,85 @@
 
     </div>
   </header>
-<div class="w-[1408px] px-12 pt-9 pb-24 inline-flex justify-start items-center gap-2.5">
-<div class="flex-1 justify-start text-zinc-600 text-4xl font-bold font-['Inter']">Unirse a un proyecto</div>
-</div>
-<div class="size- bg-white rounded-2xl outline outline-1 outline-offset-[-1px] outline-neutral-300 flex flex-col justify-center items-center gap-5">
-<div class="w-[660px] p-2.5 bg-white rounded-[20px] flex flex-col justify-center items-start gap-3.5 overflow-hidden">
-<div class="justify-start text-black text-xl font-normal font-['Inter']">Proyecto</div>
-<div class="self-stretch h-14 pl-2.5 pr-5 bg-slate-50 rounded-[20px] inline-flex justify-between items-center">
-<div class="justify-start text-neutral-400 text-xl font-normal font-['Inter']">Selecciona un proyecto </div>
-<div class="w-7 h-9 relative overflow-hidden">
-<div class="w-3.5 h-2 left-[7px] top-[13px] absolute outline outline-2 outline-offset-[-1px] outline-neutral-400"></div>
-</div>
-</div>
-<div class="justify-start text-black text-xl font-normal font-['Inter']">Clave</div>
-<div class="self-stretch h-14 px-2.5 bg-slate-50 rounded-[20px] inline-flex justify-start items-center gap-2.5">
-<div class="justify-start text-neutral-400 text-xl font-normal font-['Inter']">Ej. 8456</div>
-</div>
-</div>
-<div class="size- p-2.5 flex flex-col justify-center items-center gap-8">
-<div class="w-40 h-16 bg-orange-600 rounded-[57px] inline-flex justify-center items-center gap-2.5">
-<div class="justify-start text-white text-xl font-normal font-['Inter']">Unirse</div>
-</div>
-</div>
+  <h1 class="text-[#4A4A4A] ml-16.5 text-4xl font-bold font-['Inter'] tracking-tight pt-[48px] pb-8 text-left">
+      Unirse a un proyecto
+    </h1>
+<div class="flex flex-col items-center justify-center w-full min-h-[70vh] p-4">
+  
+  <div class="bg-white rounded-2xl border border-neutral-300 p-8 flex flex-col justify-center items-center gap-5 w-full max-w-[700px] shadow-sm">
+    
+    <form (ngSubmit)="onSubmit()" class="w-full max-w-[660px] flex flex-col gap-5">
+      
+      <!-- Selector de Proyecto -->
+      <div class="flex flex-col gap-2">
+        <label for="project" class="text-black text-xl font-normal font-['Inter']">
+          Proyecto
+        </label>
+        
+       <div class="relative">
+        <select
+          id="project"
+          name="selectedProjectId"
+          [(ngModel)]="selectedProjectId"
+          required
+          [ngClass]="{
+            'text-neutral-400': selectedProjectId === null,
+            'text-neutral-800': selectedProjectId !== null
+          }"
+          class="w-full h-14 px-4 bg-slate-50 rounded-[20px] text-xl font-normal font-['Inter'] appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer"
+        >
+          <!-- Placeholder cuando el valor es null -->
+          <option [ngValue]="null" disabled selected hidden class="text-neutral-400">
+            Selecciona un proyecto
+          </option>
+
+          <!-- Lista de proyectos -->
+          <option
+            *ngFor="let project of projects"
+            [ngValue]="project.Id_proyecto"
+            class="text-neutral-800"
+          >
+            {{ project.nombre }}
+          </option>
+        </select>
+
+        <!-- Flecha personalizada -->
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-5 text-neutral-400">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+          </svg>
+        </div>
+      </div>
+      </div>
+
+      <!-- Campo Clave -->
+      <div class="flex flex-col gap-2">
+        <label for="key" class="text-black text-xl font-normal font-['Inter']">
+          Clave
+        </label>
+        <input
+          id="key"
+          type="text"
+          name="accessKey"
+          [(ngModel)]="accessKey"
+          placeholder="Ej. 8456"
+          required
+          class="w-full h-14 px-4 bg-slate-50 rounded-[20px] text-neutral-800 placeholder-neutral-400 text-xl font-normal font-['Inter'] focus:outline-none focus:ring-2 focus:ring-orange-500"
+        />
+      </div>
+
+      <!-- Botón Unirse -->
+      <div class="flex justify-center mt-4">
+        <button
+          type="submit"
+          [disabled]="loading || !selectedProjectId || !accessKey"
+          class="w-40 h-16 bg-orange-600 hover:bg-orange-700 text-white text-xl font-normal font-['Inter'] rounded-[57px] flex justify-center items-center gap-2.5 transition-colors duration-200 shadow-md cursor-pointer"
+        >
+          {{ loading ? 'Uniéndose...' : 'Unirse' }}
+        </button>
+      </div>
+
+    </form>
+
+  </div>
 </div>
