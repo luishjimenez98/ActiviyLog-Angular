@@ -24,7 +24,7 @@ export const getProject = async (req, res) => {
 export const createProject = async(req, res) =>{
     const {nombre,estado,fecha,horas_asignadas,horas_aumentadas}=req.body;
 
-    if (!nombre || !estado || horas_asignadas==null) {
+    if (!nombre || horas_asignadas==null) {
         return res.status(400).json({ error: 'Los campos obligatorios deben ser completados.' });
     }
     try {
@@ -58,7 +58,7 @@ export const createProject = async(req, res) =>{
 
     const [result] = await pool.query(
       'INSERT INTO proyectos (Id_proyecto, nombre, Id_estado, fecha_inicio, horas_asignadas, horas_aumentadas,codigo_acceso) values (?,?,?,?,?,?,?)',
-      [null,nombre,estado,fecha||new Date(),horas_asignadas,horas_aumentadas||0,codigo] 
+      [null,nombre,estado || 1,fecha||new Date(),horas_asignadas,horas_aumentadas||0,codigo] 
     );
 
     return res.status(201).json({

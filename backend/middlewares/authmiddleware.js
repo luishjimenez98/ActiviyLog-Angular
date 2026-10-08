@@ -21,7 +21,7 @@ export const verifyToken = (req, res, next) => {
 // Validar que el usuario sea Administrador
 export const verifyAdmin = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (req.user && req.user.admin) {
+    if (req.user && req.user.Admin) {
       next();
     } else {
       return res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });

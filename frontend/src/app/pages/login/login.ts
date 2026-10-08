@@ -34,11 +34,20 @@ export class LoginComponent {
         this.cargando = false;
         console.log('Respuesta del servidor:', res);
         
-        // Si tu backend guarda un token o sesión, aquí lo procesas
-        localStorage.setItem('token', res.token);
         
-        // Redirigir a la pantalla principal del ActivityLog
-        this.router.navigate(['/dashboard']);
+
+        //Guardar token 
+        localStorage.setItem('token', res.token);
+
+        //Evaluar si es administrador
+        const isAdmin = res.user?.Admin === true;
+
+        //Redirigir según el rol
+        if (isAdmin) {
+          this.router.navigate(['/admin/dashboard']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         this.cargando = false;

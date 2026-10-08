@@ -25,7 +25,6 @@ export class JoinProjectComponent implements OnInit {
   }
 
   loadProjects() {
-    // Ajusta la función según cómo se llame en tu JoinProject service
     this.joinProjectService.getProyectos().subscribe({
       next: (data: any) => {
         this.projects = data.proyectos || [];
