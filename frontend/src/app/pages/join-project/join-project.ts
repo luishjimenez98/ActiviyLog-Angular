@@ -50,7 +50,7 @@ export class JoinProjectComponent implements OnInit {
       },
       error: (err: any) => {
         this.loading = false;
-        alert(err.error?.message || 'Error al unirse al proyecto.');
+        alert(err.error?.error || err.error?.message || 'Error al unirse al proyecto.');
       }
     });
   }

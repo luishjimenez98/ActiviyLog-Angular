@@ -23,9 +23,9 @@ export const getPersonal = async (req, res) => {
 
 // Crear un nuevo usuario (Solo Admin)
 export const createPersonal = async (req, res) => {
-  const { Nombre, Apellido_paterno, Apellido_materno,Telefono,Admin,Email, Constrasena } = req.body;
+  const { Nombre, Apellido_paterno, Apellido_materno,Telefono,Admin,Email, Contrasena } = req.body;
 
-  if (!Nombre || !Apellido_paterno || !Email || !Constrasena) {
+  if (!Nombre || !Apellido_paterno || !Email || !Contrasena) {
     return res.status(400).json({ error: 'Los campos obligatorios deben ser completados.' });
   }
 
@@ -42,7 +42,7 @@ export const createPersonal = async (req, res) => {
 
     // 2. Encriptar la contraseña con bcrypt
     const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(Constrasena, saltRounds);
+    const passwordHash = await bcrypt.hash(Contrasena, saltRounds);
 
     // 3. Insertar el nuevo usuario en la base de datos
     // Aseguramos que Admin sea 1 o 0
@@ -61,5 +61,38 @@ export const createPersonal = async (req, res) => {
   } catch (error) {
     console.error('Error al crear usuario:', error);
     return res.status(500).json({ error: 'Error al registrar el usuario en la base de datos.' });
+  }
+};
+
+//Ver personal en proyecto
+export const getPersonalProject = async (req, res) => {
+  const { id_proyecto } = req.body || {};
+
+  if (!id_proyecto) {
+    return res.status(400).json({ error: 'Falta el id_proyecto' });
+  }
+
+  try {
+    const [integrantes] = await pool.query(
+      `SELECT 
+         per.Id_personal,
+         per.Nombre,
+         per.Apellido_paterno,
+         IFNULL(SUM(rh.Horas), 0) AS horas_registradas
+       FROM personal_proyecto pp
+       INNER JOIN personal per ON pp.Id_personal = per.Id_personal
+       LEFT JOIN registro_horas rh ON pp.Id_participacion = rh.Id_participacion
+       WHERE pp.Id_proyecto = ?
+       GROUP BY per.Id_personal, per.Nombre, per.Apellido_paterno`,
+      [id_proyecto]
+    );
+
+    return res.status(200).json({
+      integrantes
+    });
+
+  } catch (error) {
+    console.error('Error al obtener integrantes:', error);
+    return res.status(500).json({ error: 'Error al consultar la base de datos.' });
   }
 };

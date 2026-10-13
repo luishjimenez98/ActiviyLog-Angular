@@ -6,17 +6,28 @@ import personalRoutes from './routes/personalRoutes.js';
 import projectsRoutes from './routes/projectRoutes.js';
 import timeRoutes from './routes/timeRoutes.js';
 
-dotenv.config();
 
-if (!process.env.JWT_SECRET) {
-  console.error('ERROR CRÍTICO: Falta definir JWT_SECRET en el archivo .env');
-  process.exit(1);
-}
+const allowedOrigins = [
+  'http://localhost:4200',
+  'http://localhost:3001',
+  'http://activitylog.itecordurango.com'
+];
+
+dotenv.config();
 
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permite peticiones sin Origin, como algunas llamadas de servidor a servidor.
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origen no permitido por CORS'));
+  }
+}));
 app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ONLINE' }));

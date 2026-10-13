@@ -38,7 +38,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al obtener proyectos:', err);
-        this.errorMsg = 'Error al cargar los proyectos desde la API.';
+        this.errorMsg = err.error?.error || err.error?.message || 'Error al cargar los proyectos desde la API.';
         this.cargando = false;
       }
     });
@@ -92,7 +92,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (err) => {
         this.submitting = false;
-        this.modalError = err.error?.message || 'Error al guardar las horas.';
+        this.modalError = err.error?.error || err.error?.message || 'Error al guardar las horas.';
       }
     });
   }

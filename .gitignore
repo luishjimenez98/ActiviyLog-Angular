@@ -9,6 +9,11 @@ node_modules/
 npm-debug.log
 yarn-error.log
 .env
+backend/.npmrc
+
+# Local agent tooling
+.agents/
+skills-lock.json
 
 # IDEs and editors
 .idea/

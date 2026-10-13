@@ -59,8 +59,8 @@
             }"
             class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-xl font-['Inter'] appearance-none focus:outline-none focus:border-orange-500 cursor-pointer"
           >
-            <option [ngValue]="null" disabled selected hidden class="text-neutral-400">
-              Buscar proyecto
+            <option [ngValue]="null" class="text-neutral-800">
+              Todos los proyectos
             </option>
             @for (project of projects; track project.Id_proyecto) {
               <option [ngValue]="project.Id_proyecto" class="text-neutral-800">
@@ -103,11 +103,11 @@
       </p>
     }
 
-    <!-- Fichas de Proyectos centradas en pantalla (Mismo tamaño: 530px x 288px) -->
-    @if (!cargando && !errorMsg && projects.length > 0) {
+   <!-- Fichas de Proyectos centradas en pantalla -->
+    @if (!cargando && !errorMsg && filteredProjects.length > 0) {
       <div class="w-full flex flex-wrap justify-center items-start gap-8">
         
-        @for (project of projects; track project.Id_proyecto) {
+        @for (project of filteredProjects; track project.Id_proyecto) {
           <div class="w-[530px] h-[288px] p-6 bg-white rounded-2xl border border-neutral-300 flex flex-col justify-between items-center shadow-sm">
             
             <!-- Header de la Tarjeta -->
@@ -129,10 +129,10 @@
               </p>
             </div>
 
-            <!-- Botón Ver Detalles (Exactamente con el contenedor y padding de Registrar Horas) -->
+            <!-- Botón Ver Detalles -->
             <div class="w-full px-[105px]">
               <button 
-                
+                (click)="verDetalles(project.Id_proyecto)"
                 class="w-full py-3 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] rounded-3xl transition-all text-white text-2xl font-semibold font-['Inter'] shadow-sm cursor-pointer text-center block"
               >
                 Ver Detalles

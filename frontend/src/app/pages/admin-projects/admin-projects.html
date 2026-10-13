@@ -1,0 +1,189 @@
+<div class="min-h-screen bg-white flex flex-col justify-start items-start w-full overflow-y-auto relative font-['Inter']">
+
+  <!-- Header Global -->
+  <header class="w-full h-[139px] bg-white border-b border-gray-200 sticky top-0 z-40 flex items-center">
+    <div class="w-full px-[66px] flex justify-between items-center gap-12">
+      
+      <!-- Logo -->
+      <img 
+        class="w-[235px] h-[72px] object-contain cursor-pointer shrink-0" 
+        src="/logo.png" 
+        alt="itecor" 
+        (click)="navigate('/admin/dashboard')"
+      />
+      
+      <!-- Menú de navegación -->
+      <nav class="flex-1 flex justify-evenly items-center max-w-[700px]">
+        <button 
+          (click)="navigate('/admin/dashboard')"
+          class="px-6 py-2 text-[#FF4500] text-2xl font-medium transition-transform hover:scale-105 cursor-pointer"
+        >
+          Proyectos
+        </button>
+        <button 
+          (click)="navigate('/admin/personal')"
+          class="px-6 py-2 text-[#2F3D47] hover:text-[#FF4500] text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"
+        >
+          Personal
+        </button>
+        <button 
+          (click)="navigate('/admin/dashboard')"
+          class="px-6 py-2 text-[#2F3D47] hover:text-red-600 text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"
+        >
+          Cerrar sesión
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="w-full px-[66px] pt-8 pb-12 flex flex-col justify-start items-start gap-8 max-w-[1460px] mx-auto">
+
+    <!-- Estados de Carga / Error -->
+    @if (cargando) {
+      <p class="text-gray-500 text-xl">Cargando detalles del proyecto...</p>
+    }
+
+    @if (errorMsg) {
+      <div class="w-[530px] p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-lg">
+        {{ errorMsg }}
+      </div>
+    }
+
+    <!-- Vista de Detalles -->
+    @if (!cargando && !errorMsg && proyecto) {
+      
+      <!-- Subheader: Volver + Título + Botones -->
+      <div class="w-full flex flex-col gap-4">
+        <!-- Botón Volver -->
+        <button 
+          (click)="navigate('/admin/dashboard')"
+          class="inline-flex items-center gap-2 text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer w-fit"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          <span class="text-xl font-normal">Volver</span>
+        </button>
+
+        <!-- Header del Proyecto -->
+        <div class="w-full flex justify-between items-center pb-4 border-b border-zinc-200">
+          <div class="flex items-center gap-6">
+            <h1 class="text-4xl font-bold text-[#4A4A4A] tracking-tight">
+              {{ proyecto.nombre }}
+            </h1>
+            <div class="px-4 py-1 bg-green-100 rounded-2xl flex justify-center items-center">
+              <span class="text-green-700 text-xl font-semibold">
+                {{ proyecto.estado || 'En proceso' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="flex items-center gap-4">
+            <button 
+              class="h-14 px-8 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] text-white text-xl font-semibold rounded-3xl transition-all shadow-sm cursor-pointer"
+            >
+              Añadir horas
+            </button>
+            <button 
+              class="h-14 px-8 bg-white hover:bg-orange-50 active:scale-[0.99] text-black text-xl font-normal rounded-3xl outline outline-1 outline-offset-[-1px] outline-orange-600 transition-all cursor-pointer"
+            >
+              Editar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout Principal: 2 Columnas -->
+      <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- COLUMNA IZQUIERDA: Información del Proyecto -->
+        <div class="lg:col-span-5 bg-white p-8 rounded-2xl border border-neutral-300 shadow-sm flex flex-col gap-6">
+          <h2 class="text-2xl font-bold text-gray-800 border-b border-gray-100 pb-3">
+            Detalles del Proyecto
+          </h2>
+
+          <div class="grid grid-cols-2 gap-6">
+            <div class="flex flex-col gap-1">
+              <span class="text-zinc-500 text-lg font-normal">Fecha de Inicio</span>
+              <span class="text-zinc-800 text-xl font-semibold">
+                {{ proyecto.fecha_inicio | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <span class="text-zinc-500 text-lg font-normal">Codigo de acceso</span>
+              <span class="text-zinc-800 text-xl font-semibold">
+                {{ proyecto.codigo_acceso || 'N/A' }}
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <span class="text-zinc-500 text-lg font-normal">Horas asignadas</span>
+              <span class="text-zinc-800 text-xl font-semibold">
+                {{ proyecto.horas_registradas || 0 }} / {{ (proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0) }} h
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-1">
+              <span class="text-zinc-500 text-lg font-normal">Horas aumentadas</span>
+              <span class="text-zinc-800 text-xl font-semibold">
+                {{ proyecto.horas_aumentadas || 0 }} h
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Personal en el Proyecto -->
+        <div class="lg:col-span-7 bg-white p-8 rounded-2xl border border-neutral-300 shadow-sm flex flex-col gap-6">
+          <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+            <h2 class="text-2xl font-bold text-gray-800">
+              Personal en este proyecto
+            </h2>
+            <span class="text-zinc-500 text-lg font-medium">
+              Total: {{ integrantes.length }} integrantes
+            </span>
+          </div>
+
+          <!-- Mensaje si no hay integrantes asignados -->
+          @if (integrantes.length === 0) {
+            <p class="text-zinc-400 text-lg py-4">
+              No hay personal asignado a este proyecto actualmente.
+            </p>
+          }
+
+          <!-- Lista de Colaboradores (Sin avatars, solo el nombre limpio) -->
+          @if (integrantes.length > 0) {
+            <div class="flex flex-col divide-y divide-gray-100">
+              
+              @for (persona of integrantes; track persona.Id_personal) {
+                <div class="py-4 flex justify-between items-center">
+                  <div class="flex flex-col">
+                    <span class="text-zinc-800 text-xl font-semibold">
+                      {{ persona.Nombre }} {{ persona.Apellido_paterno }}
+                    </span>
+                    <span class="text-zinc-400 text-base">Colaborador</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-zinc-800 text-2xl font-bold">
+                      {{ persona.horas_registradas || 0 }} h
+                    </span>
+                    <span class="text-zinc-400 text-sm block">aportadas</span>
+                  </div>
+                </div>
+              }
+
+            </div>
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+  </main>
+
+</div>

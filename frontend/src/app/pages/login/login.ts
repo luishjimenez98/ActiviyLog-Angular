@@ -52,7 +52,7 @@ export class LoginComponent {
       error: (err) => {
         this.cargando = false;
         console.error('Error al iniciar sesión:', err);
-        this.errorMessage = err.error?.message || 'Error al conectar con el servidor.';
+        this.errorMessage = err.error?.error || err.error?.message || 'Error al conectar con el servidor.';
       }
     });
   }

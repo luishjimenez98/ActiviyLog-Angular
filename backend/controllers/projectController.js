@@ -2,10 +2,62 @@ import { pool } from '../config/db.js';
 
 //Ver proyectos
 export const getProject = async (req, res) => {
+  const { id_proyecto } = req.body || {};
+
   try {
-    // 1.- Consulta para obtener los proyectos de la base de datos
+    // ==========================================
+    // CASO 1: Viene id_proyecto -> Consulta Detallada
+    // ==========================================
+    if (id_proyecto) {
+      const [proyecto] = await pool.query(
+        `SELECT 
+           p.Id_proyecto, 
+           p.nombre, 
+           p.Id_estado, 
+           p.fecha_inicio, 
+           p.horas_asignadas, 
+           p.horas_aumentadas, 
+           p.codigo_acceso,
+           IFNULL(
+             (SELECT SUM(rh.Horas) 
+              FROM personal_proyecto pp_all
+              INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
+              WHERE pp_all.Id_proyecto = p.Id_proyecto), 
+             0
+           ) AS horas_registradas
+         FROM proyectos p
+         WHERE p.Id_proyecto = ?`,
+        [id_proyecto]
+      );
+
+      if (proyecto.length === 0) {
+        return res.status(404).json({ message: 'Proyecto no encontrado.' });
+      }
+
+      return res.status(200).json({
+        proyecto: proyecto[0]
+      });
+    }
+
+    // ==========================================
+    // CASO 2: NO viene id_proyecto -> Consulta Simple (Todos)
+    // ==========================================
     const [proyectos] = await pool.query(
-      'SELECT Id_proyecto, nombre, Id_estado, fecha_inicio, horas_asignadas, horas_aumentadas FROM proyectos'
+      `SELECT 
+         p.Id_proyecto, 
+         p.nombre, 
+         p.Id_estado, 
+         p.fecha_inicio, 
+         p.horas_asignadas, 
+         p.horas_aumentadas,
+         IFNULL(
+           (SELECT SUM(rh.Horas) 
+            FROM personal_proyecto pp_all
+            INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
+            WHERE pp_all.Id_proyecto = p.Id_proyecto), 
+           0
+         ) AS horas_registradas
+       FROM proyectos p`
     );
 
     return res.status(200).json({
@@ -13,8 +65,12 @@ export const getProject = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error al buscar proyectos', error);
-    return res.status(500).json({ error: 'Error interno al buscar en la base de datos.' });
+    // ESTO TE MOSTRARÁ EL ERROR EXACTO DE MYSQL EN LA CONSOLA DE NODE.JS
+    console.error('Error exacto en la consulta SQL de proyectos:', error.message);
+    return res.status(500).json({ 
+      error: 'Error interno en la base de datos.',
+      detalle: error.message 
+    });
   }
 };
 

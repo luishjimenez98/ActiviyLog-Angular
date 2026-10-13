@@ -4,6 +4,7 @@ import {LoginComponent } from '../app/pages/login/login';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { JoinProjectComponent } from './pages/join-project/join-project';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard';
+import { AdminProjectsComponent } from './pages/admin-projects/admin-projects';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' }, // Si entran a la raíz '/', redirigir a /login
@@ -15,4 +16,7 @@ export const routes: Routes = [
     component: AdminDashboardComponent, // Tu componente de admin
     canActivate: [adminGuard]           // Aplica la protección aquí
   },
+  {path: 'admin/proyectos',component:AdminProjectsComponent, 
+    canActivate: [adminGuard]
+  }
 ];

@@ -41,10 +41,18 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('Error al obtener proyectos:', err);
-        this.errorMsg = 'Error al cargar los proyectos desde la API.';
+        this.errorMsg = err.error?.error || err.error?.message || 'Error al cargar los proyectos desde la API.';
         this.cargando = false;
       }
     });
+  }
+  // En admin-dashboard.component.ts
+
+  get filteredProjects() {
+    if (!this.selectedSearchProjectId) {
+      return this.projects; // Muestra todos si no hay selección
+    }
+    return this.projects.filter(p => p.Id_proyecto === this.selectedSearchProjectId);
   }
 
   // Navegación del Header
@@ -57,6 +65,12 @@ export class AdminDashboardComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
+  verDetalles(idProyecto: number) {
+    // Navegamos a la ruta de proyectos pasando el ID en el state de la navegación
+    this.router.navigate(['/admin/proyectos'], { 
+      state: { id_proyecto: idProyecto } 
+    });
+  }
   // Métodos del Modal (Crear Proyecto)
   handleOpenModal() {
     this.modalError = '';
@@ -98,7 +112,7 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (err: any) => {
         this.submitting = false;
-        this.modalError = err.error?.message || 'Error al crear el proyecto.';
+        this.modalError = err.error?.error || err.error?.message || 'Error al crear el proyecto.';
       }
     });
   }

@@ -20,12 +20,13 @@ export class AdminDashboardService {
 
   // 1. Obtener la lista de proyectos desde el backend
   getProyectos(): Observable<any> {
-    return this.http.get(`${this.API_URL}/proyectos`);
+    return this.http.post(`${this.API_URL}/proyectos`,{},
+      { headers: this.getHeaders() });
   }
 
   // 2. Registrar horas en un proyecto
   crearProyectos(nombre:string, horas_asignadas:number): Observable<any> {
-    return this.http.post(`${this.API_URL}/proyectos`,
+    return this.http.post(`${this.API_URL}/proyectos/crear`,
        {nombre:nombre,
         horas_asignadas:horas_asignadas
        },
