@@ -27,7 +27,7 @@
           Personal
         </button>
         <button 
-          (click)="navigate('/admin/dashboard')"
+          (click)="cerrarSesion()"
           class="px-6 py-2 text-[#2F3D47] hover:text-red-600 text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"
         >
           Cerrar sesión
@@ -83,11 +83,13 @@
           <!-- Acciones -->
           <div class="flex items-center gap-4">
             <button 
+              (click)="handleOpenModal(proyecto.Id_proyecto)"
               class="h-14 px-8 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] text-white text-xl font-semibold rounded-3xl transition-all shadow-sm cursor-pointer"
             >
-              Añadir horas
+              Registrar Horas
             </button>
             <button 
+              (click)="handleOpenEditModal()"
               class="h-14 px-8 bg-white hover:bg-orange-50 active:scale-[0.99] text-black text-xl font-normal rounded-3xl outline outline-1 outline-offset-[-1px] outline-orange-600 transition-all cursor-pointer"
             >
               Editar
@@ -143,7 +145,7 @@
               Personal en este proyecto
             </h2>
             <span class="text-zinc-500 text-lg font-medium">
-              Total: {{ integrantes.length }} integrantes
+              {{ integrantes.length }} integrantes
             </span>
           </div>
 
@@ -154,23 +156,19 @@
             </p>
           }
 
-          <!-- Lista de Colaboradores (Sin avatars, solo el nombre limpio) -->
+          <!-- Lista de Colaboradores -->
           @if (integrantes.length > 0) {
             <div class="flex flex-col divide-y divide-gray-100">
               
               @for (persona of integrantes; track persona.Id_personal) {
                 <div class="py-4 flex justify-between items-center">
-                  <div class="flex flex-col">
-                    <span class="text-zinc-800 text-xl font-semibold">
-                      {{ persona.Nombre }} {{ persona.Apellido_paterno }}
-                    </span>
-                    <span class="text-zinc-400 text-base">Colaborador</span>
-                  </div>
+                  <span class="text-zinc-800 text-xl font-semibold">
+                    {{ persona.Nombre }} {{ persona.Apellido_paterno }}
+                  </span>
                   <div class="text-right">
                     <span class="text-zinc-800 text-2xl font-bold">
                       {{ persona.horas_registradas || 0 }} h
                     </span>
-                    <span class="text-zinc-400 text-sm block">aportadas</span>
                   </div>
                 </div>
               }
@@ -185,5 +183,180 @@
     }
 
   </main>
+
+  <!-- MODAL DE REGISTRO DE HORAS -->
+  @if (isModalOpen) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl p-8 max-w-md w-full flex flex-col gap-6 shadow-2xl animate-fade-in">
+        
+        <div class="flex justify-between items-center">
+          <h3 class="text-2xl font-bold text-[#4A4A4A]">Registrar Horas</h3>
+          <button 
+            (click)="handleCloseModal()"
+            class="text-gray-400 hover:text-gray-600 text-2xl font-bold cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        @if (modalError) {
+          <div class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+            {{ modalError }}
+          </div>
+        }
+
+        @if (modalSuccess) {
+          <div class="p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">
+            {{ modalSuccess }}
+          </div>
+        }
+
+        <div class="flex flex-col gap-2">
+          <label class="text-zinc-600 text-lg font-medium">Horas a registrar</label>
+          <input 
+            type="number" 
+            [(ngModel)]="horasInput" 
+            placeholder="Ej. 8"
+            min="1"
+            class="w-full h-14 px-4 rounded-2xl border border-gray-300 focus:outline-none focus:border-[#FF4500] text-xl"
+          />
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button 
+            (click)="handleCloseModal()"
+            class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-medium cursor-pointer"
+          >
+            Cancelar
+          </button>
+          <button 
+            (click)="handleAddHours()"
+            [disabled]="submitting"
+            class="px-6 py-3 bg-[#FF4500] hover:bg-[#E03E00] disabled:bg-orange-300 text-white rounded-2xl font-semibold cursor-pointer transition-colors"
+          >
+            {{ submitting ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- MODAL FICHA EDITABLE DEL PROYECTO -->
+  @if (isEditModalOpen) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div class="bg-white rounded-3xl p-8 max-w-2xl w-full flex flex-col gap-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto font-['Inter']">
+        
+        <!-- Encabezado del Modal -->
+        <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+          <h3 class="text-2xl font-bold text-[#4A4A4A]">Editar Ficha del Proyecto</h3>
+          <button 
+            (click)="handleCloseEditModal()"
+            class="text-gray-400 hover:text-gray-600 text-2xl font-bold cursor-pointer transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Alertas -->
+        @if (editModalError) {
+          <div class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
+            {{ editModalError }}
+          </div>
+        }
+
+        @if (editModalSuccess) {
+          <div class="p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm font-medium">
+            {{ editModalSuccess }}
+          </div>
+        }
+
+        <!-- Cuerpo de la Ficha Editable -->
+        <div class="flex flex-col gap-6">
+          
+          <!-- Nombre del Proyecto -->
+          <div class="flex flex-col gap-2">
+            <label class="text-zinc-500 text-base font-normal">Nombre del proyecto</label>
+            <input 
+              type="text" 
+              [(ngModel)]="editForm.nombre" 
+              placeholder="Ej. Sistema Actividad"
+              class="w-full h-12 px-4 rounded-xl border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-xl font-semibold"
+            />
+          </div>
+
+          <!-- Grid de Detalles de la Ficha -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-200">
+            
+            <!-- Fecha de Inicio -->
+            <div class="flex flex-col gap-1">
+              <label class="text-zinc-500 text-sm font-normal">Fecha de Inicio</label>
+              <input 
+                type="date" 
+                [(ngModel)]="editForm.fecha_inicio" 
+                class="w-full h-11 px-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-base font-medium"
+              />
+            </div>
+
+            <!-- Código de acceso (4 Dígitos estrictos) -->
+            <div class="flex flex-col gap-1">
+              <label class="text-zinc-500 text-sm font-normal">Código de acceso (4 dígitos)</label>
+              <input 
+                type="text" 
+                [value]="editForm.codigo_acceso"
+                (input)="onCodigoInput($event)"
+                placeholder="1234"
+                maxlength="4"
+                class="w-full h-11 px-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-base font-medium tracking-widest"
+              />
+            </div>
+
+            <!-- Horas Asignadas -->
+            <div class="flex flex-col gap-1">
+              <label class="text-zinc-500 text-sm font-normal">Horas asignadas iniciales</label>
+              <input 
+                type="number" 
+                [(ngModel)]="editForm.horas_asignadas" 
+                min="0"
+                class="w-full h-11 px-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-base font-medium"
+              />
+            </div>
+
+            <!-- Horas Aumentadas -->
+            <div class="flex flex-col gap-1">
+              <label class="text-zinc-500 text-sm font-normal">Aumentar horas extras</label>
+              <input 
+                type="number" 
+                [(ngModel)]="editForm.horas_aumentadas" 
+                min="0"
+                placeholder="0"
+                class="w-full h-11 px-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-base font-medium"
+              />
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex justify-end gap-4 pt-4 border-t border-gray-100">
+          <button 
+            (click)="handleCloseEditModal()"
+            class="h-12 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-2xl font-medium cursor-pointer transition-colors"
+          >
+            Cancelar
+          </button>
+          <button 
+            (click)="handleUpdateProyecto()"
+            [disabled]="editSubmitting"
+            class="h-12 px-8 bg-[#FF4500] hover:bg-[#E03E00] disabled:bg-orange-300 text-white font-semibold rounded-2xl cursor-pointer transition-colors shadow-sm"
+          >
+            {{ editSubmitting ? 'Guardando...' : 'Editar' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
 
 </div>

@@ -19,7 +19,7 @@ export class DashboardService {
 
   // 1. Obtener la lista de proyectos desde el backend
   getProyectos(): Observable<any> {
-    return this.http.post(`${this.API_URL}/proyectos`,{},
+    return this.http.get(`${this.API_URL}/proyectos/personal`,
       { headers: this.getHeaders() });
   }
 

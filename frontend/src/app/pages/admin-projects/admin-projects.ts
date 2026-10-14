@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common'; // <-- 1. Importar DatePipe
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminProjectsService } from '../../services/admin-projects';
@@ -10,7 +10,7 @@ import { AdminProjectsService } from '../../services/admin-projects';
   imports: [
     CommonModule, 
     FormsModule, 
-    DatePipe // <-- 2. Agregar DatePipe aquí
+    DatePipe
   ],
   templateUrl: './admin-projects.html',
 })
@@ -22,6 +22,15 @@ export class AdminProjectsComponent implements OnInit {
   errorMsg = '';
   proyecto: any = null;
   integrantes: any[] = [];
+  loading: boolean = false;
+  
+  // Modal
+  isModalOpen: boolean = false;
+  selectedProyectoId: number | null = null;
+  horasInput: number | string = '';
+  modalError: string = '';
+  modalSuccess: string = '';
+  submitting: boolean = false;
 
   ngOnInit(): void {
     const navigation = this.router.getCurrentNavigation();
@@ -33,6 +42,194 @@ export class AdminProjectsComponent implements OnInit {
       this.errorMsg = 'No se seleccionó ningún proyecto.';
       this.cargando = false;
     }
+  }
+  cerrarSesion() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    this.router.navigate(['/login']);
+  }
+
+  // Métodos del Modal
+  handleOpenModal(proyectoId: number) {
+    this.selectedProyectoId = proyectoId;
+    this.modalError = '';
+    this.modalSuccess = '';
+    this.horasInput = '';
+    this.isModalOpen = true;
+  }
+
+  handleCloseModal() {
+    this.isModalOpen = false;
+    this.selectedProyectoId = null;
+  }
+
+  // Helper para obtener el ID del usuario/admin actual grabado en el login
+  private getCurrentUserId(): number | null {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) return null;
+    try {
+      const user = JSON.parse(userStr);
+      return user.Id_personal || user.id || null;
+    } catch {
+      return null;
+    }
+  }
+
+  handleAddHours() {
+    if (!this.horasInput || Number(this.horasInput) <= 0) {
+      this.modalError = 'Ingresa una cantidad de horas válida.';
+      return;
+    }
+
+    if (!this.selectedProyectoId || !this.proyecto) return;
+
+    this.submitting = true;
+    this.modalError = '';
+    this.modalSuccess = '';
+
+    const currentUserId = this.getCurrentUserId();
+    
+    // Verificamos si el admin ya está registrado en este proyecto en la lista actual
+    const yaEstaInscrito = this.integrantes.some(
+      (persona) => Number(persona.Id_personal) === Number(currentUserId)
+    );
+
+    if (!yaEstaInscrito) {
+      // 1. Si NO está inscrito, primero lo unimos usando el código de acceso del proyecto
+      const codigoAcceso = this.proyecto.codigo_acceso;
+
+      this.adminProjectsService.joinProyecto(this.selectedProyectoId, codigoAcceso).subscribe({
+        next: () => {
+          // Una vez unido, procedemos a registrar las horas
+          this.guardarHoras();
+        },
+        error: (err) => {
+          this.submitting = false;
+          this.modalError = err.error?.error || err.error?.message || 'Error al unirse al proyecto automáticamente.';
+        }
+      });
+    } else {
+      // 2. Si YA está inscrito, guardamos horas directamente
+      this.guardarHoras();
+    }
+  }
+
+  // Método auxiliar para realizar la petición HTTP de registro de horas
+  private guardarHoras() {
+    this.adminProjectsService.registrarHoras(this.selectedProyectoId!, Number(this.horasInput)).subscribe({
+      next: () => {
+        this.submitting = false;
+        this.modalSuccess = '¡Horas registradas exitosamente!';
+        
+        // Recargamos los datos para actualizar la lista de integrantes y las horas sumadas
+        if (this.selectedProyectoId) {
+          this.cargarInformacionProyecto(this.selectedProyectoId);
+        }
+
+        setTimeout(() => {
+          this.handleCloseModal();
+        }, 1200);
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.modalError = err.error?.error || err.error?.message || 'Error al guardar las horas.';
+      }
+    });
+  }
+
+  // Variables para el Modal de Ficha Editable
+  isEditModalOpen: boolean = false;
+  editForm = {
+    nombre: '',
+    codigo_acceso: '',
+    fecha_inicio: '',
+    horas_asignadas: 0,
+    horas_aumentadas: 0
+  };
+  editModalError: string = '';
+  editModalSuccess: string = '';
+  editSubmitting: boolean = false;
+
+  // Abrir modal y cargar la ficha actual
+  handleOpenEditModal() {
+    if (!this.proyecto) return;
+
+    const fechaFormateada = this.proyecto.fecha_inicio 
+      ? new Date(this.proyecto.fecha_inicio).toISOString().split('T')[0] 
+      : '';
+
+    this.editForm = {
+      nombre: this.proyecto.nombre || '',
+      codigo_acceso: this.proyecto.codigo_acceso || '',
+      fecha_inicio: fechaFormateada,
+      horas_asignadas: this.proyecto.horas_asignadas || 0,
+      horas_aumentadas: this.proyecto.horas_aumentadas || 0
+    };
+
+    this.editModalError = '';
+    this.editModalSuccess = '';
+    this.isEditModalOpen = true;
+  }
+
+  handleCloseEditModal() {
+    this.isEditModalOpen = false;
+  }
+
+  // Restringir el código de acceso a 4 dígitos numéricos en tiempo real
+  onCodigoInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    // Reemplaza todo lo que no sea número y corta a 4 caracteres
+    input.value = input.value.replace(/\D/g, '').slice(0, 4);
+    this.editForm.codigo_acceso = input.value;
+  }
+
+  // Enviar la ficha completa al endpoint
+  handleUpdateProyecto() {
+    if (!this.editForm.nombre.trim()) {
+      this.editModalError = 'El nombre del proyecto es obligatorio.';
+      return;
+    }
+
+    if (this.editForm.codigo_acceso && this.editForm.codigo_acceso.length !== 4) {
+      this.editModalError = 'El código de acceso debe tener exactamente 4 dígitos.';
+      return;
+    }
+
+    this.editSubmitting = true;
+    this.editModalError = '';
+    this.editModalSuccess = '';
+
+    // Aseguramos enviar solo la fecha en formato string "YYYY-MM-DD"
+    const fechaLimpia = this.editForm.fecha_inicio ? this.editForm.fecha_inicio : '';
+
+    this.adminProjectsService.updateProject(
+      this.proyecto.Id_proyecto,                // id_proyecto
+      this.editForm.codigo_acceso,              // clave
+      this.editForm.nombre,                     // nombre
+      fechaLimpia,                              // fecha (String YYYY-MM-DD)
+      this.proyecto.Id_estado || 1,             // estado
+      Number(this.editForm.horas_asignadas),   // horas_asignadas
+      Number(this.editForm.horas_aumentadas)    // horas_aumentadas
+    ).subscribe({
+      next: () => {
+        this.editSubmitting = false;
+        this.editModalSuccess = '¡Proyecto actualizado correctamente!';
+        
+        // Recargamos los datos actualizados en pantalla
+        this.cargarInformacionProyecto(this.proyecto.Id_proyecto);
+
+        setTimeout(() => {
+          this.handleCloseEditModal();
+        }, 1200);
+      },
+      error: (err) => {
+        this.editSubmitting = false;
+        // Corregimos la extracción del texto de error para que no muestre [object Object]
+        this.editModalError = typeof err.error?.error === 'string' 
+          ? err.error.error 
+          : (err.error?.message || 'Error al actualizar el proyecto.');
+      }
+    });
   }
 
   cargarInformacionProyecto(id: number) {

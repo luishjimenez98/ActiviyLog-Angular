@@ -5,9 +5,7 @@ export const getProject = async (req, res) => {
   const { id_proyecto } = req.body || {};
 
   try {
-    // ==========================================
-    // CASO 1: Viene id_proyecto -> Consulta Detallada
-    // ==========================================
+
     if (id_proyecto) {
       const [proyecto] = await pool.query(
         `SELECT 
@@ -38,10 +36,6 @@ export const getProject = async (req, res) => {
         proyecto: proyecto[0]
       });
     }
-
-    // ==========================================
-    // CASO 2: NO viene id_proyecto -> Consulta Simple (Todos)
-    // ==========================================
     const [proyectos] = await pool.query(
       `SELECT 
          p.Id_proyecto, 
@@ -66,10 +60,9 @@ export const getProject = async (req, res) => {
 
   } catch (error) {
     // ESTO TE MOSTRARÁ EL ERROR EXACTO DE MYSQL EN LA CONSOLA DE NODE.JS
-    console.error('Error exacto en la consulta SQL de proyectos:', error.message);
+    console.error('Error exacto en la consulta SQL de proyectos:');
     return res.status(500).json({ 
-      error: 'Error interno en la base de datos.',
-      detalle: error.message 
+      error: 'Error interno en la base de datos.'
     });
   }
 };
@@ -230,54 +223,73 @@ export const getProjectPersonal = async (req, res) => {
   }
 };
 
-//editar un proyecto/admin
-export const updateProject = async(req, res) =>{
-    const {id_proyecto,nombre,estado,fecha,horas_asignadas,codigo,horas_aumentadas}=req.body;
+// editar un proyecto / admin
+export const updateProject = async (req, res) => {
+  const { 
+    id_proyecto, 
+    nombre, 
+    estado, 
+    fecha, 
+    horas_asignadas, 
+    codigo, 
+    horas_aumentadas 
+  } = req.body;
 
-    if (!nombre || !estado || horas_asignadas==null) {
-        return res.status(400).json({ error: 'Los campos obligatorios deben ser completados.' });
-    }
-    try {
-    // 1. Verificar si el proyecto ya existe
+  if (!id_proyecto || !nombre || estado == null || horas_asignadas == null) {
+    return res.status(400).json({ error: 'Los campos obligatorios deben ser completados.' });
+  }
+
+  try {
+    // 1. Verificar si el proyecto existe
     const [existingProject] = await pool.query(
       'SELECT Id_proyecto FROM proyectos WHERE Id_proyecto = ?',
       [id_proyecto]
     );
 
     if (existingProject.length === 0) {
-      return res.status(400).json({ error: 'El proyecto no esta registrado' });
+      return res.status(400).json({ error: 'El proyecto no está registrado.' });
     }
 
-    // 2. Crear el codigo de acceso y verificar que no existe
-    let codigo_valido
-    if(codigo){
-      codigo_valido = await existing(codigo)
-    }
-    else{
-      codigo=Math.floor(1000 + Math.random() * 9000).toString();
-      codigo_valido = await existing(codigo)
-    }
-    
-
-    async function existing (code){
-        const [existingCode] = await pool.query(
-          `SELECT Id_proyecto FROM proyectos WHERE codigo_acceso = ? AND Id_proyecto != ?`,
-          [code, id_proyecto]
-        );
-        if(existingCode.length===0){
-          return code
-        }else{
-          return res.status(400).json({message: 'Codigo registrado en otro proyecto'})
-        }
+    // 2. Determinar o generar el código de acceso
+    let codigoFinal = codigo;
+    if (!codigoFinal) {
+      codigoFinal = Math.floor(1000 + Math.random() * 9000).toString();
     }
 
-    const [updateProject] = await pool.query(
-      'update proyectos set nombre = ?, Id_estado = ?, fecha_inicio = ?, horas_asignadas = ?,horas_aumentadas = ?, codigo_acceso= ? where Id_proyecto = ?',
-      [nombre,estado,fecha,horas_asignadas,horas_aumentadas,codigo_valido,id_proyecto]
+    // 3. Verificar que el código no esté asignado a OTRO proyecto diferente
+    const [existingCode] = await pool.query(
+      'SELECT Id_proyecto FROM proyectos WHERE codigo_acceso = ? AND Id_proyecto != ?',
+      [codigoFinal, id_proyecto]
     );
-    return res.status(200).json({updateProject});
-  }
-  catch (error) {
+
+    if (existingCode.length > 0) {
+      return res.status(400).json({ error: 'El código de acceso ya está registrado en otro proyecto.' });
+    }
+
+    // 4. Actualizar en la base de datos
+    await pool.query(
+      `UPDATE proyectos 
+       SET nombre = ?, 
+           Id_estado = ?, 
+           fecha_inicio = ?, 
+           horas_asignadas = ?, 
+           horas_aumentadas = ?, 
+           codigo_acceso = ? 
+       WHERE Id_proyecto = ?`,
+      [
+        nombre, 
+        estado, 
+        fecha, 
+        horas_asignadas, 
+        horas_aumentadas || 0, 
+        codigoFinal, 
+        id_proyecto
+      ]
+    );
+
+    return res.status(200).json({ message: 'Proyecto actualizado correctamente.' });
+
+  } catch (error) {
     console.error('Error al actualizar el proyecto:', error);
     return res.status(500).json({ error: 'Error interno en la base de datos.' });
   }
