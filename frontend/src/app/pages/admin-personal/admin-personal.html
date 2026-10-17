@@ -1,0 +1,278 @@
+<div class="min-h-screen bg-white flex flex-col justify-start items-start w-full overflow-y-auto relative font-['Inter']">
+
+  <!-- Header Global -->
+  <header class="w-full h-[139px] bg-white border-b border-gray-200 sticky top-0 z-40 flex items-center">
+    <div class="w-full px-[66px] flex justify-between items-center gap-12">
+      
+      <!-- Logo -->
+      <img 
+        class="w-[235px] h-[72px] object-contain cursor-pointer shrink-0" 
+        src="/logo.png" 
+        alt="itecor" 
+        (click)="navigate('/admin/dashboard')"
+      />
+      
+      <!-- Menú de navegación -->
+      <nav class="flex-1 flex justify-evenly items-center max-w-[700px]">
+        <button 
+          (click)="navigate('/admin/dashboard')"
+          class="px-6 py-2 text-[#2F3D47] hover:text-[#FF4500] text-2xl font-medium font-['Inter'] transition-colors hover:scale-105 cursor-pointer"
+        >
+          Proyectos
+        </button>
+        <button 
+          (click)="navigate('/admin/personal')"
+          class="px-6 py-2 text-[#FF4500] text-2xl font-medium font-['Inter'] transition-transform hover:scale-105 cursor-pointer"
+        >
+          Personal
+        </button>
+        <button 
+          (click)="cerrarSesion()"
+          class="px-6 py-2 text-[#2F3D47] hover:text-red-600 text-2xl font-medium font-['Inter'] transition-colors hover:scale-105 cursor-pointer"
+        >
+          Cerrar sesión
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="w-full px-[66px] pb-12 flex flex-col justify-start items-start">
+    
+    <!-- Subheader: Título + Combo Box + Botón Registrar -->
+    <div class="w-full pt-[48px] pb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100">
+      <h1 class="text-[#4A4A4A] text-4xl font-bold font-['Inter'] tracking-tight">
+        Administración Personal
+      </h1>
+
+      <div class="flex flex-wrap items-center gap-4 w-full sm:w-auto">
+        
+        <!-- Combo Box / Select de Selección de Trabajador -->
+        <div class="relative w-full sm:w-80">
+          <select
+            id="selectPersonal"
+            name="selectedPersonalId"
+            [(ngModel)]="selectedPersonalId"
+            (change)="onSeleccionarTrabajador()"
+            [ngClass]="{
+              'text-neutral-400': selectedPersonalId === null,
+              'text-neutral-800': selectedPersonalId !== null
+            }"
+            class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-xl font-['Inter'] appearance-none focus:outline-none focus:border-orange-500 cursor-pointer"
+          >
+            <option [ngValue]="null" class="text-neutral-800" disabled selected>
+              Selecciona un trabajador
+            </option>
+            @for (persona of listaPersonal; track persona.Id_personal) {
+              <option [value]="persona.Id_personal" class="text-neutral-800">
+                {{ persona.Nombre }} {{ persona.Apellido_paterno }}
+              </option>
+            }
+          </select>
+
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-neutral-400">
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Botón Registrar Personal (Naranja) -->
+        <button
+          (click)="handleOpenRegisterModal()"
+          class="h-14 px-8 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] text-white text-xl font-semibold font-['Inter'] rounded-3xl transition-all shadow-sm cursor-pointer"
+        >
+          Registrar personal
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Estados de Carga / Mensajes -->
+    @if (cargandoProyectos) {
+      <p class="text-gray-500 text-xl font-['Inter'] pt-6">
+        Cargando proyectos del colaborador...
+      </p>
+    }
+
+    @if (!cargandoProyectos && selectedPersonalId && proyectosPersonal.length === 0) {
+      <p class="text-gray-500 text-xl font-['Inter'] pt-6">
+        Este colaborador no tiene proyectos asignados actualmente.
+      </p>
+    }
+
+    <!-- Grid de Fichas Angostas (w-[380px]) -->
+    @if (!cargandoProyectos && selectedPersonalId && proyectosPersonal.length > 0) {
+      <div class="w-full flex flex-wrap justify-center items-start gap-8 pt-8">
+        
+        @for (project of proyectosPersonal; track project.Id_proyecto) {
+          <div class="w-[380px] h-[200px] p-6 bg-white rounded-2xl border border-neutral-300 flex flex-col justify-between items-center shadow-sm hover:shadow-md transition-shadow">
+            
+            <!-- Header de la Tarjeta (Título + Estado) -->
+            <div class="w-full flex justify-between items-start gap-3">
+              <h3 class="text-black text-2xl font-semibold font-['Inter'] truncate flex-1">
+                {{ project.nombre }}
+              </h3>
+              <div class="px-3 py-1 bg-green-100 rounded-2xl flex justify-center items-center shrink-0">
+                <span class="text-green-700 text-base font-semibold font-['Inter']">
+                  {{ project.estado || 'En proceso' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Botón Administrar -->
+            <div class="w-full px-[40px]">
+              <button 
+                (click)="administrarPersonalProyecto(project.Id_proyecto)"
+                class="w-full py-3 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] rounded-3xl transition-all text-white text-xl font-semibold font-['Inter'] shadow-sm cursor-pointer text-center block"
+              >
+                Administrar
+              </button>
+            </div>
+
+          </div>
+        }
+
+      </div>
+    }
+
+  </main>
+
+  <!-- MODAL REGISTRAR PERSONAL -->
+@if (isRegisterModalOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 font-['Inter']">
+    <div class="bg-white rounded-3xl p-8 max-w-4xl w-full flex flex-col gap-6 shadow-2xl animate-fade-in max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header del Modal -->
+        <h2 class="text-2xl font-bold text-gray-800 font-['Inter'] text-center">
+          Registrar Personal
+        </h2>
+      
+
+      <!-- Alertas -->
+      @if (registerModalError) {
+        <div class="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-base font-medium">
+          {{ registerModalError }}
+        </div>
+      }
+
+      @if (registerModalSuccess) {
+        <div class="p-3 bg-green-50 border border-green-200 text-green-700 rounded-xl text-base font-medium">
+          {{ registerModalSuccess }}
+        </div>
+      }
+
+      <!-- Grid Exacto del Figma -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+        
+        <!-- 1. Nombre (Full Width) -->
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label class="text-black text-xl font-normal">Nombre</label>
+          <input 
+            type="text" 
+            [(ngModel)]="registerForm.nombre" 
+            placeholder="Ej. Juan"
+            class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
+          />
+        </div>
+
+        <!-- 2. Apellido Paterno -->
+        <div class="flex flex-col gap-2">
+          <label class="text-black text-xl font-normal">Apellido Paterno</label>
+          <input 
+            type="text" 
+            [(ngModel)]="registerForm.apellido_paterno" 
+            placeholder="Ej. Pérez"
+            class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
+          />
+        </div>
+
+        <!-- 3. Apellido Materno -->
+        <div class="flex flex-col gap-2">
+          <label class="text-black text-xl font-normal">Apellido Materno</label>
+          <input 
+            type="text" 
+            [(ngModel)]="registerForm.apellido_materno" 
+            placeholder="Ej. López"
+            class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
+          />
+        </div>
+
+        <!-- 4. Email -->
+        <div class="flex flex-col gap-2">
+          <label class="text-black text-xl font-normal">Email</label>
+          <input 
+            type="email" 
+            [(ngModel)]="registerForm.email" 
+            placeholder="correo@ejemplo.com"
+            class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
+          />
+        </div>
+
+        <!-- 5. Contraseña -->
+        <div class="flex flex-col gap-2">
+          <label class="text-black text-xl font-normal">Contraseña</label>
+          <input 
+            type="password" 
+            [(ngModel)]="registerForm.contrasena" 
+            placeholder="••••••••"
+            class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
+          />
+        </div>
+
+        <!-- 6. Teléfono (Full Width) -->
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label class="text-black text-xl font-normal">Teléfono</label>
+          <input 
+            type="tel" 
+            [(ngModel)]="registerForm.telefono" 
+            placeholder="Ej. 6181234567"
+            class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
+          />
+        </div>
+
+        <!-- 7. Checkbox Administrador (Full Width) -->
+        <div class="flex items-center gap-3 pt-2 md:col-span-2">
+          <input 
+            type="checkbox" 
+            id="isAdminCheckbox"
+            [(ngModel)]="registerForm.isAdmin"
+            class="w-6 h-6 rounded-lg border-gray-300 text-[#FF4500] focus:ring-[#FF4500] accent-[#FF4500] cursor-pointer"
+          />
+          <label for="isAdminCheckbox" class="text-black text-xl font-normal cursor-pointer select-none">
+            Asignar como Administrador
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Acciones del Modal: Botones Centrados -->
+      <div class="flex justify-center items-center gap-8 pt-4 border-t border-gray-100">
+        <!-- Botón Crear -->
+        <button
+          (click)="handleRegisterPersonal()"
+          [disabled]="registerSubmitting"
+          class="w-40 h-16 bg-[#FF4500] hover:bg-[#E03E00] active:scale-95 rounded-[57px] flex justify-center items-center transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+        >
+          <span class="text-white text-xl font-normal">
+            {{ registerSubmitting ? 'Guardando...' : 'Crear' }}
+          </span>
+        </button>
+
+        <!-- Botón Cancelar -->
+        <button
+          (click)="handleCloseRegisterModal()"
+          [disabled]="registerSubmitting"
+          class="w-40 h-16 bg-white hover:bg-orange-50 active:scale-95 rounded-[57px] outline outline-1 outline-offset-[-1px] outline-orange-600 flex justify-center items-center transition-all cursor-pointer"
+        >
+          <span class="text-black text-xl font-normal">
+            Cancelar
+          </span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+</div>
