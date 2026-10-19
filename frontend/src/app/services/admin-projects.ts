@@ -24,10 +24,15 @@ export class AdminProjectsService {
       { headers: this.getHeaders() });
   }
 
-  // 2. Obtener el perosnal de un proyecto
+  // 2. Obtener el personal de un proyecto
   getPersonalProyecto(id_proyecto:number): Observable<any> {
     return this.http.post(`${this.API_URL}/personal/proyecto`,
        {id_proyecto:id_proyecto},
+      { headers: this.getHeaders() });
+  }
+
+  getEstados(): Observable<any> {
+    return this.http.get(`${this.API_URL}/proyectos/estados`,
       { headers: this.getHeaders() });
   }
 

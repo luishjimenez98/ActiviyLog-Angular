@@ -92,10 +92,15 @@ export class AdminPersonalComponent implements OnInit {
 
   // Redirige a administrar el proyecto seleccionado
   administrarPersonalProyecto(idProyecto: number) {
-    this.router.navigate(['/admin/personal/proyecto'], {
-      state: { id_proyecto: idProyecto }
-    });
-  }
+  if (!this.selectedPersonalId) return;
+
+  this.router.navigate(['/admin/personal/proyecto'], {
+    state: { 
+      id_personal: this.selectedPersonalId,
+      id_proyecto: idProyecto 
+    }
+  });
+}
   // Variables del Modal
 isRegisterModalOpen: boolean = false;
 registerSubmitting: boolean = false;
@@ -107,7 +112,7 @@ registerForm = {
   apellido_paterno: '',
   apellido_materno: '',
   telefono: '',
-  isAdmin: false, // false = Colaborador, true = Administrador
+  isAdmin: false, //  true = Administrador
   email: '',
   contrasena: ''
 };
@@ -169,7 +174,7 @@ handleRegisterPersonal() {
     },
     error: (err) => {
       this.registerSubmitting = false;
-      this.registerModalError = err.error?.error || err.error?.message || 'Error al registrar al colaborador.';
+      this.registerModalError = err.error?.error || err.error?.message || 'Error al registrar personal.';
     }
   });
 }

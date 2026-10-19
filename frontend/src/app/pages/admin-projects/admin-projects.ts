@@ -32,6 +32,8 @@ export class AdminProjectsComponent implements OnInit {
   modalSuccess: string = '';
   submitting: boolean = false;
 
+  listaEstados: any[] = [];
+
   ngOnInit(): void {
     const navigation = this.router.getCurrentNavigation();
     const idProyecto = navigation?.extras.state?.['id_proyecto'] || history.state?.['id_proyecto'];
@@ -42,7 +44,9 @@ export class AdminProjectsComponent implements OnInit {
       this.errorMsg = 'No se seleccionó ningún proyecto.';
       this.cargando = false;
     }
+    this.cargarEstados();
   }
+
   cerrarSesion() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -144,11 +148,21 @@ export class AdminProjectsComponent implements OnInit {
     codigo_acceso: '',
     fecha_inicio: '',
     horas_asignadas: 0,
-    horas_aumentadas: 0
+    horas_aumentadas: 0,
+    Id_estado: 1 // Usamos Id_estado para mantener coherencia con el [(ngModel)] del HTML
   };
   editModalError: string = '';
   editModalSuccess: string = '';
   editSubmitting: boolean = false;
+
+  cargarEstados() {
+    this.adminProjectsService.getEstados().subscribe({
+      next: (res: any) => {
+        this.listaEstados = res.estados || [];
+      },
+      error: (err) => console.error('Error al cargar estados:', err)
+    });
+  }
 
   // Abrir modal y cargar la ficha actual
   handleOpenEditModal() {
@@ -163,7 +177,8 @@ export class AdminProjectsComponent implements OnInit {
       codigo_acceso: this.proyecto.codigo_acceso || '',
       fecha_inicio: fechaFormateada,
       horas_asignadas: this.proyecto.horas_asignadas || 0,
-      horas_aumentadas: this.proyecto.horas_aumentadas || 0
+      horas_aumentadas: this.proyecto.horas_aumentadas || 0,
+      Id_estado: this.proyecto.Id_estado || 1
     };
 
     this.editModalError = '';
@@ -178,7 +193,6 @@ export class AdminProjectsComponent implements OnInit {
   // Restringir el código de acceso a 4 dígitos numéricos en tiempo real
   onCodigoInput(event: Event) {
     const input = event.target as HTMLInputElement;
-    // Reemplaza todo lo que no sea número y corta a 4 caracteres
     input.value = input.value.replace(/\D/g, '').slice(0, 4);
     this.editForm.codigo_acceso = input.value;
   }
@@ -199,7 +213,6 @@ export class AdminProjectsComponent implements OnInit {
     this.editModalError = '';
     this.editModalSuccess = '';
 
-    // Aseguramos enviar solo la fecha en formato string "YYYY-MM-DD"
     const fechaLimpia = this.editForm.fecha_inicio ? this.editForm.fecha_inicio : '';
 
     this.adminProjectsService.updateProject(
@@ -207,7 +220,7 @@ export class AdminProjectsComponent implements OnInit {
       this.editForm.codigo_acceso,              // clave
       this.editForm.nombre,                     // nombre
       fechaLimpia,                              // fecha (String YYYY-MM-DD)
-      this.proyecto.Id_estado || 1,             // estado
+      Number(this.editForm.Id_estado),          // <-- Estado actualizado del formulario
       Number(this.editForm.horas_asignadas),   // horas_asignadas
       Number(this.editForm.horas_aumentadas)    // horas_aumentadas
     ).subscribe({
@@ -224,7 +237,6 @@ export class AdminProjectsComponent implements OnInit {
       },
       error: (err) => {
         this.editSubmitting = false;
-        // Corregimos la extracción del texto de error para que no muestre [object Object]
         this.editModalError = typeof err.error?.error === 'string' 
           ? err.error.error 
           : (err.error?.message || 'Error al actualizar el proyecto.');

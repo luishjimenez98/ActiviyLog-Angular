@@ -96,3 +96,46 @@ export const getPersonalProject = async (req, res) => {
     return res.status(500).json({ error: 'Error al consultar la base de datos.' });
   }
 };
+
+//Ver permisos
+
+export const getPermisos = async(req,res)=>{
+  try{
+
+    const [permisos] = await pool.query(
+        `SELECT *
+        FROM permisos`
+      );
+      return res.status(200).json({
+        permisos
+      });
+
+  }catch (error) {
+    console.error('Error al buscar estados');
+    return res.status(500).json({ 
+      error: 'Error interno en la base de datos.'
+    });
+  }
+}
+
+//Crear permisos
+
+export const crearPermisos = async(req,res)=>{
+  const {nombre}=req.body;
+  try{
+
+    const [permisos] = await pool.query(
+        `Insert into permisos (Id_permiso,nombre)
+        values (?,?)`,[null,nombre]
+      );
+      return res.status(201).json({
+        nombre:nombre
+      });
+
+  }catch (error) {
+    console.error('Error al insertar el permiso');
+    return res.status(500).json({ 
+      error: 'Error interno en la base de datos.'
+    });
+  }
+}

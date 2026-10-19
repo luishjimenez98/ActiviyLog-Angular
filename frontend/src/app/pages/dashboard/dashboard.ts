@@ -1,12 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NgClass } from '@angular/common';
 import { DashboardService } from '../../services/dashboard';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule,NgClass],
   templateUrl: './dashboard.html'
 })
 export class DashboardComponent implements OnInit {

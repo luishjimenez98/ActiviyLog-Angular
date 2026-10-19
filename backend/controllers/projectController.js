@@ -9,22 +9,24 @@ export const getProject = async (req, res) => {
     if (id_proyecto) {
       const [proyecto] = await pool.query(
         `SELECT 
-           p.Id_proyecto, 
-           p.nombre, 
-           p.Id_estado, 
-           p.fecha_inicio, 
-           p.horas_asignadas, 
-           p.horas_aumentadas, 
-           p.codigo_acceso,
-           IFNULL(
-             (SELECT SUM(rh.Horas) 
-              FROM personal_proyecto pp_all
-              INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
-              WHERE pp_all.Id_proyecto = p.Id_proyecto), 
-             0
-           ) AS horas_registradas
-         FROM proyectos p
-         WHERE p.Id_proyecto = ?`,
+          p.Id_proyecto, 
+          p.nombre, 
+          p.Id_estado, 
+          e.nombre AS estado,
+          p.fecha_inicio, 
+          p.horas_asignadas, 
+          p.horas_aumentadas, 
+          p.codigo_acceso,
+          IFNULL(
+            (SELECT SUM(rh.Horas) 
+            FROM personal_proyecto pp_all
+            INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
+            WHERE pp_all.Id_proyecto = p.Id_proyecto), 
+            0
+          ) AS horas_registradas
+        FROM proyectos p
+        LEFT JOIN estados e ON p.Id_estado = e.Id_estado
+        WHERE p.Id_proyecto = ?`,
         [id_proyecto]
       );
 
@@ -38,20 +40,22 @@ export const getProject = async (req, res) => {
     }
     const [proyectos] = await pool.query(
       `SELECT 
-         p.Id_proyecto, 
-         p.nombre, 
-         p.Id_estado, 
-         p.fecha_inicio, 
-         p.horas_asignadas, 
-         p.horas_aumentadas,
-         IFNULL(
-           (SELECT SUM(rh.Horas) 
-            FROM personal_proyecto pp_all
-            INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
-            WHERE pp_all.Id_proyecto = p.Id_proyecto), 
-           0
-         ) AS horas_registradas
-       FROM proyectos p`
+        p.Id_proyecto, 
+        p.nombre, 
+        p.Id_estado, 
+        e.nombre AS estado,
+        p.fecha_inicio, 
+        p.horas_asignadas, 
+        p.horas_aumentadas,
+        IFNULL(
+          (SELECT SUM(rh.Horas) 
+          FROM personal_proyecto pp_all
+          INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
+          WHERE pp_all.Id_proyecto = p.Id_proyecto), 
+          0
+        ) AS horas_registradas
+      FROM proyectos p
+      LEFT JOIN estados e ON p.Id_estado = e.Id_estado`
     );
 
     return res.status(200).json({
@@ -59,8 +63,7 @@ export const getProject = async (req, res) => {
     });
 
   } catch (error) {
-    // ESTO TE MOSTRARÁ EL ERROR EXACTO DE MYSQL EN LA CONSOLA DE NODE.JS
-    console.error('Error exacto en la consulta SQL de proyectos:');
+    console.error('Erros al encontrar proyectos');
     return res.status(500).json({ 
       error: 'Error interno en la base de datos.'
     });
@@ -179,9 +182,11 @@ export const joinProject = async (req, res) => {
 
 //Ver proyectos por personal
 export const getProjectPersonal = async (req, res) => {
+  let {id_personal} = req.body;
+  if(!id_personal){
+    id_personal = req.user?.id;
+  }
   try {
-    const id_personal = req.user?.id;
-    const nombre = req.user?.nombre;
     if (!id_personal) {
       return res.status(401).json({ error: 'Usuario no encontrado' });
     }
@@ -191,24 +196,27 @@ export const getProjectPersonal = async (req, res) => {
       `SELECT 
         p.Id_proyecto,
         p.nombre,
+        p.Id_estado,
+        e.nombre AS estado,
         p.horas_asignadas,
         p.horas_aumentadas,
         IFNULL(
           (SELECT SUM(rh.Horas) 
-           FROM personal_proyecto pp_all
-           INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
-           WHERE pp_all.Id_proyecto = p.Id_proyecto), 
+          FROM personal_proyecto pp_all
+          INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
+          WHERE pp_all.Id_proyecto = p.Id_proyecto), 
           0
         ) AS horas_registradas
       FROM personal_proyecto pp_user
       INNER JOIN proyectos p ON pp_user.Id_proyecto = p.Id_proyecto
+      LEFT JOIN estados e ON p.Id_estado = e.Id_estado
       WHERE pp_user.Id_personal = ?`,
       [id_personal]
     );
 
     if (proyectos.length === 0) {
       return res.status(200).json({ 
-        message: `Bienvenido ${id_personal}. \n No estás registrado en ningún proyecto.`,
+        message: `No estás registrado en ningún proyecto.`,
         proyectos: [] 
       });
     }
@@ -294,3 +302,47 @@ export const updateProject = async (req, res) => {
     return res.status(500).json({ error: 'Error interno en la base de datos.' });
   }
 };
+
+
+//Ver estados
+
+export const getEstados = async(req,res)=>{
+  try{
+
+    const [estados] = await pool.query(
+        `SELECT *
+        FROM estados`
+      );
+
+      return res.status(200).json({
+        estados
+      });
+
+  }catch (error) {
+    console.error('Error al buscar estados');
+    return res.status(500).json({ 
+      error: 'Error interno en la base de datos.'
+    });
+  }
+}
+
+//crear Estados
+export const crearEstados = async(req,res)=>{
+  const {nombre}=req.body;
+  try{
+
+    const [estados] = await pool.query(
+        `Insert into estados (Id_estado,nombre)
+        values (?,?)`,[null,nombre]
+      );
+      return res.status(201).json({
+        nombre:nombre
+      });
+
+  }catch (error) {
+    console.error('Error al insertar el estado');
+    return res.status(500).json({ 
+      error: 'Error interno en la base de datos.'
+    });
+  }
+}

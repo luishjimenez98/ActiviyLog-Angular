@@ -1,1 +1,171 @@
-<p>admin-personal-project works!</p>
+<div class="min-h-screen bg-white flex flex-col justify-start items-start w-full overflow-y-auto relative font-['Inter']">
+
+  <!-- Header Global -->
+  <header class="w-full h-[139px] bg-white border-b border-gray-200 sticky top-0 z-40 flex items-center">
+    <div class="w-full px-[66px] flex justify-between items-center gap-12">
+      
+      <!-- Logo -->
+      <img 
+        class="w-[235px] h-[72px] object-contain cursor-pointer shrink-0" 
+        src="/logo.png" 
+        alt="itecor" 
+        (click)="navigate('/admin/dashboard')"
+      />
+      
+      <!-- Menú de navegación -->
+      <nav class="flex-1 flex justify-evenly items-center max-w-[700px]">
+        <button 
+          (click)="navigate('/admin/dashboard')"
+          class="px-6 py-2 text-[#FF4500] text-2xl font-medium transition-transform hover:scale-105 cursor-pointer"
+        >
+          Proyectos
+        </button>
+        <button 
+          (click)="navigate('/admin/personal')"
+          class="px-6 py-2 text-[#2F3D47] hover:text-[#FF4500] text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"
+        >
+          Personal
+        </button>
+      </nav>
+
+    </div>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main class="w-full px-[66px] pt-8 pb-12 flex flex-col justify-start items-start gap-8 max-w-[1460px] mx-auto">
+
+    <!-- Mensaje de Carga / Error -->
+    @if (cargando) {
+      <p class="text-gray-500 text-xl">Cargando información del colaborador...</p>
+    }
+
+    @if (errorMsg) {
+      <div class="w-[530px] p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-lg">
+        {{ errorMsg }}
+      </div>
+    }
+
+    @if (!cargando && !errorMsg) {
+
+      <!-- Botón Volver + Header con Nombre del Empleado y Proyecto -->
+      <div class="w-full flex flex-col gap-4">
+        <button 
+          (click)="volver()"
+          class="inline-flex items-center gap-2 text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer w-fit"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          <span class="text-xl font-normal">Volver al proyecto</span>
+        </button>
+
+        <div class="w-full flex justify-between items-center pb-4 border-b border-zinc-200">
+          <div class="flex flex-col gap-1">
+            <h1 class="text-4xl font-bold text-[#4A4A4A] tracking-tight">
+              {{ empleado?.Nombre || 'Empleado' }} {{ empleado?.Apellido_paterno || '' }}
+            </h1>
+            <p class="text-zinc-500 text-xl">
+              Proyecto: <span class="text-zinc-800 font-semibold">{{ proyecto?.nombre || 'N/A' }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Layout Principal: 2 Columnas -->
+      <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- COLUMNA IZQUIERDA: Asignación de Permisos en este Proyecto -->
+        <div class="lg:col-span-5 bg-white p-8 rounded-2xl border border-neutral-300 shadow-sm flex flex-col gap-6">
+          <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+            <h2 class="text-2xl font-bold text-gray-800">
+              Permisos en el Proyecto
+            </h2>
+          </div>
+
+          <p class="text-zinc-500 text-base">
+            Selecciona las acciones que este colaborador puede realizar dentro de este proyecto:
+          </p>
+
+          <!-- Lista de Permisos (Checkboxes) -->
+          <div class="flex flex-col gap-4">
+            @for (permiso of listaPermisos; track permiso.Id_permiso) {
+              <label class="flex items-center gap-3 p-4 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 cursor-pointer transition-colors">
+                <input 
+                  type="checkbox" 
+                  [checked]="hasPermiso(permiso.Id_permiso)"
+                  (change)="togglePermiso(permiso.Id_permiso, $event)"
+                  class="w-5 h-5 accent-[#FF4500] cursor-pointer"
+                />
+                <div class="flex flex-col">
+                  <span class="text-zinc-800 text-lg font-semibold">
+                    {{ permiso.nombre }}
+                  </span>
+                </div>
+              </label>
+            }
+
+            @if (listaPermisos.length === 0) {
+              <p class="text-zinc-400 text-base">No hay permisos disponibles para cargar.</p>
+            }
+          </div>
+
+          <!-- Botón Guardar Permisos -->
+          <div class="pt-4 border-t border-gray-100 flex justify-end">
+            <button 
+              (click)="guardarPermisos()"
+              [disabled]="submittingPermisos"
+              class="h-12 px-8 bg-[#FF4500] hover:bg-[#E03E00] disabled:bg-orange-300 text-white font-semibold rounded-2xl cursor-pointer transition-colors shadow-sm"
+            >
+              {{ submittingPermisos ? 'Guardando...' : 'Guardar Permisos' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Registro de Horas del Empleado -->
+        <div class="lg:col-span-7 bg-white p-8 rounded-2xl border border-neutral-300 shadow-sm flex flex-col gap-6">
+          <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+            <h2 class="text-2xl font-bold text-gray-800">
+              Historial de Horas Registradas
+            </h2>
+            <span class="text-zinc-500 text-lg font-medium">
+              {{ historialHoras.length }} registros
+            </span>
+          </div>
+
+          <!-- Mensaje si no hay historial -->
+          @if (historialHoras.length === 0) {
+            <p class="text-zinc-400 text-lg py-4">
+              Este colaborador aún no ha registrado horas en este proyecto.
+            </p>
+          }
+
+          <!-- Tabla/Lista de Horas Registradas -->
+          @if (historialHoras.length > 0) {
+            <div class="flex flex-col divide-y divide-gray-100">
+              <div class="py-2 grid grid-cols-2 text-zinc-400 font-semibold text-base">
+                <span>Fecha</span>
+                <span class="text-right">Horas Ingresadas</span>
+              </div>
+
+              @for (registro of historialHoras; track registro.Id_registro) {
+                <div class="py-4 grid grid-cols-2 items-center">
+                  <span class="text-zinc-800 text-lg font-medium">
+                    {{ registro.Fecha | date:'dd/MM/yyyy HH:mm' }}
+                  </span>
+                  <span class="text-zinc-800 text-2xl font-bold text-right">
+                    {{ registro.Horas }} h
+                  </span>
+                </div>
+              }
+            </div>
+          }
+
+        </div>
+
+      </div>
+
+    }
+
+  </main>
+
+</div>

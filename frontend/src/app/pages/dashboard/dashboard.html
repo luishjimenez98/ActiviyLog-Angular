@@ -69,14 +69,22 @@
         @for (proyecto of proyectos; track proyecto.Id_proyecto) {
           <div class="w-[530px] h-[288px] p-6 bg-white rounded-2xl border border-neutral-300 flex flex-col justify-between items-center shadow-sm">
             
-            <!-- Header de la Tarjeta -->
+            <!-- Header de la Tarjeta (Estado Dinámico) -->
             <div class="w-full flex justify-between items-start gap-3.5">
               <h2 class="text-black text-3xl font-semibold font-['Inter'] truncate max-w-[320px]">
                 {{ proyecto.nombre }}
               </h2>
-              <div class="px-3 py-1 bg-green-100 rounded-2xl flex justify-center items-center shrink-0">
-                <span class="text-green-700 text-xl font-semibold font-['Inter']">
-                  En proceso
+              <div 
+                class="px-3 py-1 rounded-2xl flex justify-center items-center shrink-0"
+                class="px-4 py-1 rounded-2xl flex justify-center items-center shrink-0"
+                [ngClass]="{
+                  'bg-red-100 text-red-700': proyecto.estado !== 'En proceso',
+                  'bg-green-100 text-green-700': proyecto.estado === 'En proceso'
+                }"
+                
+              >
+                <span class="text-xl font-semibold font-['Inter']">
+                  {{ proyecto.estado }}
                 </span>
               </div>
             </div>
@@ -92,9 +100,10 @@
             <div class="w-full px-[105px]">
               <button 
                 (click)="handleOpenModal(proyecto.Id_proyecto)"
-                class="w-full py-3 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] rounded-3xl transition-all text-white text-2xl font-semibold font-['Inter'] shadow-sm cursor-pointer"
+                [disabled]="proyecto.estado === 'Finalizado' || proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))"
+                class="w-full py-3 rounded-3xl transition-all text-2xl font-semibold font-['Inter'] shadow-sm cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:active:scale-100 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] text-white"
               >
-                Registrar Horas
+                {{ (proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))) ? 'Completado' : 'Registrar Horas' }}
               </button>
             </div>
 

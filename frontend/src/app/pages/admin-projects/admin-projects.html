@@ -67,14 +67,20 @@
           <span class="text-xl font-normal">Volver</span>
         </button>
 
-        <!-- Header del Proyecto -->
+        <!-- Header del Proyecto con Estado Dinámico (Verde / Rojo) -->
         <div class="w-full flex justify-between items-center pb-4 border-b border-zinc-200">
           <div class="flex items-center gap-6">
             <h1 class="text-4xl font-bold text-[#4A4A4A] tracking-tight">
               {{ proyecto.nombre }}
             </h1>
-            <div class="px-4 py-1 bg-green-100 rounded-2xl flex justify-center items-center">
-              <span class="text-green-700 text-xl font-semibold">
+            <div 
+              class="px-4 py-1 rounded-2xl flex justify-center items-center shrink-0"
+              [ngClass]="{
+                'bg-red-100 text-red-700': proyecto.estado !== 'En proceso',
+                'bg-green-100 text-green-700': proyecto.estado === 'En proceso'
+              }"
+            >
+              <span class="text-xl font-semibold">
                 {{ proyecto.estado || 'En proceso' }}
               </span>
             </div>
@@ -82,18 +88,22 @@
 
           <!-- Acciones -->
           <div class="flex items-center gap-4">
+
             <button 
               (click)="handleOpenModal(proyecto.Id_proyecto)"
-              class="h-14 px-8 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] text-white text-xl font-semibold rounded-3xl transition-all shadow-sm cursor-pointer"
+              [disabled]="proyecto.estado === 'Finalizado' || proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))"
+              class="h-14 px-8 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] text-white text-xl font-semibold rounded-3xl transition-all shadow-sm cursor-pointer disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:active:scale-100"
             >
-              Registrar Horas
+              {{ (proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))) ? 'Completado' : 'Registrar Horas' }}
             </button>
+            
             <button 
               (click)="handleOpenEditModal()"
               class="h-14 px-8 bg-white hover:bg-orange-50 active:scale-[0.99] text-black text-xl font-normal rounded-3xl outline outline-1 outline-offset-[-1px] outline-orange-600 transition-all cursor-pointer"
             >
               Editar
             </button>
+
           </div>
         </div>
       </div>
@@ -116,7 +126,7 @@
             </div>
 
             <div class="flex flex-col gap-1">
-              <span class="text-zinc-500 text-lg font-normal">Codigo de acceso</span>
+              <span class="text-zinc-500 text-lg font-normal">Código de acceso</span>
               <span class="text-zinc-800 text-xl font-semibold">
                 {{ proyecto.codigo_acceso || 'N/A' }}
               </span>
@@ -332,6 +342,21 @@
                 placeholder="0"
                 class="w-full h-11 px-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-base font-medium"
               />
+            </div>
+
+            <!-- Select para Estado del Proyecto (Corregido a editForm.Id_estado) -->
+            <div class="flex flex-col gap-2 md:col-span-2">
+              <label class="text-black text-xl font-normal">Estado del proyecto</label>
+              <select 
+                [(ngModel)]="editForm.Id_estado"
+                class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors cursor-pointer"
+              >
+                @for (estado of listaEstados; track estado.Id_estado) {
+                  <option [value]="estado.Id_estado">
+                    {{ estado.nombre }}
+                  </option>
+                }
+              </select>
             </div>
 
           </div>
