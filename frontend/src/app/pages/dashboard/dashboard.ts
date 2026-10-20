@@ -55,6 +55,13 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
+  administrarProyecto(idProyecto: number) {
+    // Navegamos a la ruta de proyectos pasando el ID en el state de la navegación
+    this.router.navigate(['/admin/proyectos'], { 
+      state: { id_proyecto: idProyecto } 
+    });
+  }
+
   // Métodos del Modal
   handleOpenModal(proyectoId: number) {
     this.selectedProyectoId = proyectoId;

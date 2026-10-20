@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { verifyAdmin } from '../middlewares/authmiddleware.js';
-import { getPersonal,createPersonal, getPersonalProject, getPermisos,crearPermisos } from '../controllers/personalController.js';
+import { verifyAdmin,verifyToken } from '../middlewares/authmiddleware.js';
+import { getPersonal,createPersonal, getPersonalProject, getPermisos,crearPermisos,getPersonalProyectoPermisos,updatePermisosPersonal } from '../controllers/personalController.js';
 
 const router = Router();
 
@@ -8,7 +8,8 @@ const router = Router();
 router.post('/', verifyAdmin, createPersonal);
 
 router.get('/', verifyAdmin, getPersonal);
-router.post('/proyecto',verifyAdmin, getPersonalProject);
-router.get('/permisos',getPermisos);
-router.post('/permisos',crearPermisos)
+router.post('/proyecto',verifyToken, getPersonalProject);
+router.get('/permisos',verifyToken,getPermisos);
+router.post('/proyecto/permisos',verifyAdmin,getPersonalProyectoPermisos);
+router.post('/proyecto/permisos/actualizar', verifyAdmin,updatePermisosPersonal)
 export default router;

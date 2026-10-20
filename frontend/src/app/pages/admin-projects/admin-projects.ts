@@ -67,56 +67,66 @@ export class AdminProjectsComponent implements OnInit {
     this.selectedProyectoId = null;
   }
 
-  // Helper para obtener el ID del usuario/admin actual grabado en el login
-  private getCurrentUserId(): number | null {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
-    try {
-      const user = JSON.parse(userStr);
-      return user.Id_personal || user.id || null;
-    } catch {
-      return null;
-    }
+  /// Helper para obtener el ID del usuario/admin actual grabado en el login
+private getCurrentUserId(): number | null {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
+  try {
+    // Decodificamos el payload (segunda parte del JWT)
+    const payloadBase64 = token.split('.')[1];
+    const decodedJson = atob(payloadBase64);
+    const decoded = JSON.parse(decodedJson);
+
+    return Number(
+      decoded.id
+    ) || null;
+  } catch {
+    return null;
+  }
+}
+
+handleAddHours() {
+  if (!this.horasInput || Number(this.horasInput) <= 0) {
+    this.modalError = 'Ingresa una cantidad de horas válida.';
+    return;
   }
 
-  handleAddHours() {
-    if (!this.horasInput || Number(this.horasInput) <= 0) {
-      this.modalError = 'Ingresa una cantidad de horas válida.';
-      return;
-    }
+  if (!this.selectedProyectoId) return;
 
-    if (!this.selectedProyectoId || !this.proyecto) return;
+  this.submitting = true;
+  this.modalError = '';
+  this.modalSuccess = '';
 
-    this.submitting = true;
-    this.modalError = '';
-    this.modalSuccess = '';
+  const currentUserId = this.getCurrentUserId();
 
-    const currentUserId = this.getCurrentUserId();
-    
-    // Verificamos si el admin ya está registrado en este proyecto en la lista actual
-    const yaEstaInscrito = this.integrantes.some(
-      (persona) => Number(persona.Id_personal) === Number(currentUserId)
+  // Verificamos si el admin ya está registrado comprobando varias formas de nombrar la clave ID
+  const yaEstaInscrito = this.integrantes.some((personal) => {
+    const idPersonal = Number(
+      personal.Id_personal
     );
+    return idPersonal === Number(currentUserId);
+  });
 
-    if (!yaEstaInscrito) {
-      // 1. Si NO está inscrito, primero lo unimos usando el código de acceso del proyecto
-      const codigoAcceso = this.proyecto.codigo_acceso;
+  if (!yaEstaInscrito) {
+    // 1. Si NO está inscrito, primero lo unimos usando el código de acceso del proyecto
+    const codigoAcceso = this.proyecto.codigo_acceso;
 
-      this.adminProjectsService.joinProyecto(this.selectedProyectoId, codigoAcceso).subscribe({
-        next: () => {
-          // Una vez unido, procedemos a registrar las horas
-          this.guardarHoras();
-        },
-        error: (err) => {
-          this.submitting = false;
-          this.modalError = err.error?.error || err.error?.message || 'Error al unirse al proyecto automáticamente.';
-        }
-      });
-    } else {
-      // 2. Si YA está inscrito, guardamos horas directamente
-      this.guardarHoras();
-    }
+    this.adminProjectsService.joinProyecto(this.selectedProyectoId, codigoAcceso).subscribe({
+      next: () => {
+        // Una vez unido, procedemos a registrar las horas
+        this.guardarHoras();
+      },
+      error: (err) => {
+        this.submitting = false;
+        this.modalError = err.error?.error || err.error?.message || 'Error al unirse al proyecto automáticamente.';
+      }
+    });
+  } else {
+    // 2. Si YA está inscrito, guardamos horas directamente
+    this.guardarHoras();
   }
+}
 
   // Método auxiliar para realizar la petición HTTP de registro de horas
   private guardarHoras() {

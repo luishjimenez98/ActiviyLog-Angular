@@ -18,8 +18,7 @@ export const routes: Routes = [
     component: AdminDashboardComponent, // Tu componente de admin
     canActivate: [adminGuard]           // Aplica la protección aquí
   },
-  {path: 'admin/proyectos',component:AdminProjectsComponent, 
-    canActivate: [adminGuard]
+  {path: 'admin/proyectos',component:AdminProjectsComponent
   },
   {path: 'admin/personal',component:AdminPersonalComponent, 
     canActivate: [adminGuard]

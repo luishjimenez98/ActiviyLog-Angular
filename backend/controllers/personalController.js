@@ -139,3 +139,95 @@ export const crearPermisos = async(req,res)=>{
     });
   }
 }
+
+
+export const getPersonalProyectoPermisos = async (req, res) => {
+  const { id_personal, id_proyecto } = req.body;
+
+  if (!id_personal || !id_proyecto) {
+    return res.status(400).json({ error: 'El id_personal e id_proyecto son obligatorios.' });
+  }
+
+  try {
+    // 1. Obtener datos 
+    const [[detalle]] = await pool.query(
+      `SELECT 
+        p.Id_personal,
+        p.Nombre,
+        p.Apellido_paterno,
+        pr.Id_proyecto,
+        pr.nombre AS nombre_proyecto,
+        pp.Id_participacion
+       FROM personal_proyecto pp
+       INNER JOIN personal p ON pp.Id_personal = p.Id_personal
+       INNER JOIN proyectos pr ON pp.Id_proyecto = pr.Id_proyecto
+       WHERE pp.Id_personal = ? AND pp.Id_proyecto = ?`,
+      [id_personal, id_proyecto]
+    );
+
+    if (!detalle) {
+      return res.status(404).json({ error: 'No se encuentra asignado a este proyecto.' });
+    }
+
+    // 2. Obtener permisos activos
+    const [permisos] = await pool.query(
+      `SELECT Id_permiso 
+       FROM permisos_proyecto 
+       WHERE Id_participacion = ? AND activo = 1`,
+      [detalle.Id_participacion]
+    );
+
+    const permisosIds = permisos.map(p => p.Id_permiso);
+
+    return res.status(200).json({
+      trabajador: {
+        Id_personal: detalle.Id_personal,
+        Nombre: detalle.Nombre,
+        Apellido_paterno: detalle.Apellido_paterno,
+        Id_participacion: detalle.Id_participacion
+      },
+      proyecto: {
+        Id_proyecto: detalle.Id_proyecto,
+        nombre: detalle.nombre_proyecto
+      },
+      permisosAsignados: permisosIds
+    });
+
+  } catch (error) {
+    console.error('Error al obtener detalle de personal en proyecto:', error);
+    return res.status(500).json({ error: 'Error interno en la base de datos.' });
+  }
+};
+
+export const updatePermisosPersonal = async (req, res) => {
+  const { id_participacion, permisosSeleccionados } = req.body; 
+  // permisosSeleccionados es un arreglo de IDs: ej. [1, 2]
+
+  if (!id_participacion || !Array.isArray(permisosSeleccionados)) {
+    return res.status(400).json({ error: 'Datos incompletos para actualizar permisos.' });
+  }
+
+  try {
+    // Opción rápida y limpia: Desactivar todos los permisos de la participación
+    await pool.query(
+      `UPDATE permisos_proyecto SET activo = 0 WHERE Id_participacion = ?`,
+      [id_participacion]
+    );
+
+    // Para cada permiso seleccionado en el arreglo, hacemos INSERT / ON DUPLICATE KEY UPDATE a activo = 1
+    for (const idPermiso of permisosSeleccionados) {
+      await pool.query(
+        `INSERT INTO permisos_proyecto (Id_permiso, Id_participacion, activo)
+         VALUES (?, ?, 1)
+         ON DUPLICATE KEY UPDATE activo = 1`,
+        [idPermiso, id_participacion]
+      );
+    }
+
+    return res.status(200).json({ message: 'Permisos actualizados correctamente.' });
+
+  } catch (error) {
+    console.error('Error al actualizar permisos:', error);
+    return res.status(500).json({ error: 'Error interno en la base de datos.' });
+  }
+};

@@ -7,7 +7,7 @@ router.post('/crear',verifyAdmin,createProject);
 router.post('/', verifyToken, getProject);
 router.post('/unirse',verifyToken, joinProject);
 router.post('/personal',verifyToken,getProjectPersonal);
-router.put('/actualizar',verifyAdmin,updateProject);
+router.put('/actualizar',verifyToken,updateProject);
 router.get('/estados', getEstados);
 
 export default router;

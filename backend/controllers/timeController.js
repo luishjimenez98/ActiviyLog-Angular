@@ -87,3 +87,33 @@ export const addTime = async (req, res) => {
     return res.status(500).json({ error: 'Error interno en la base de datos.' });
   }
 };
+
+export const getHorasPersonalProyecto = async (req, res) => {
+  const { id_personal, id_proyecto } = req.body;
+
+  if (!id_personal || !id_proyecto) {
+    return res.status(400).json({ error: 'El ID del personal y del proyecto son obligatorios.' });
+  }
+
+  try {
+    const [registros] = await pool.query(
+      `SELECT 
+        rh.Id_registro,
+        rh.Horas,
+        rh.Fecha
+       FROM registro_horas rh
+       INNER JOIN personal_proyecto pp ON rh.Id_participacion = pp.Id_participacion
+       WHERE pp.Id_personal = ? AND pp.Id_proyecto = ?
+       ORDER BY rh.Fecha DESC`,
+      [id_personal, id_proyecto]
+    );
+
+    return res.status(200).json({
+      historial: registros
+    });
+
+  } catch (error) {
+    console.error('Error al obtener el historial de horas:', error);
+    return res.status(500).json({ error: 'Error interno en la base de datos al obtener historial de horas.' });
+  }
+};

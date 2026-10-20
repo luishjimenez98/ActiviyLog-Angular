@@ -126,7 +126,7 @@ export const createProject = async(req, res) =>{
   }
 };
 
-//Unirse a un proyecto
+// Unirse a un proyecto
 export const joinProject = async (req, res) => {
   const { id_proyecto, codigo } = req.body;
   // Extraer id_personal de la sesión del usuario
@@ -167,6 +167,14 @@ export const joinProject = async (req, res) => {
       [id_personal, id_proyecto]
     );
 
+    const idParticipacion = result.insertId;
+
+    // 4. Asignar permiso por defecto: "Registrar horas" (Id_permiso = 1)
+    await pool.query(
+      'INSERT INTO permisos_proyecto (Id_permiso, Id_participacion, activo) VALUES (1, ?, 1)',
+      [idParticipacion]
+    );
+
     return res.status(201).json({
       message: 'Te has unido al proyecto exitosamente.',
       proyecto: id_proyecto,
@@ -180,18 +188,19 @@ export const joinProject = async (req, res) => {
 };
 
 
-//Ver proyectos por personal
+// Ver proyectos por personal
 export const getProjectPersonal = async (req, res) => {
-  let {id_personal} = req.body;
-  if(!id_personal){
-    id_personal = req.user?.id;
+  let { id_personal } = req.body;
+  if (!id_personal) {
+    id_personal = req.user?.id_personal || req.user?.Id_personal || req.user?.id;
   }
+
   try {
     if (!id_personal) {
       return res.status(401).json({ error: 'Usuario no encontrado' });
     }
 
-    // Consulta para obtener los proyectos donde esta registrado el usuario
+    // Consulta con permisos activos concatenados por cada participación
     const [proyectos] = await pool.query(
       `SELECT 
         p.Id_proyecto,
@@ -202,11 +211,16 @@ export const getProjectPersonal = async (req, res) => {
         p.horas_aumentadas,
         IFNULL(
           (SELECT SUM(rh.Horas) 
-          FROM personal_proyecto pp_all
-          INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
-          WHERE pp_all.Id_proyecto = p.Id_proyecto), 
+           FROM personal_proyecto pp_all
+           INNER JOIN registro_horas rh ON pp_all.Id_participacion = rh.Id_participacion
+           WHERE pp_all.Id_proyecto = p.Id_proyecto), 
           0
-        ) AS horas_registradas
+        ) AS horas_registradas,
+        (
+          SELECT GROUP_CONCAT(perm.Id_permiso)
+          FROM permisos_proyecto perm
+          WHERE perm.Id_participacion = pp_user.Id_participacion AND perm.activo = 1
+        ) AS permisos_str
       FROM personal_proyecto pp_user
       INNER JOIN proyectos p ON pp_user.Id_proyecto = p.Id_proyecto
       LEFT JOIN estados e ON p.Id_estado = e.Id_estado
@@ -216,13 +230,25 @@ export const getProjectPersonal = async (req, res) => {
 
     if (proyectos.length === 0) {
       return res.status(200).json({ 
-        message: `No estás registrado en ningún proyecto.`,
+        message: 'No estás registrado en ningún proyecto.',
         proyectos: [] 
       });
     }
 
+    // Convertimos la cadena de permisos "1,2" en un arreglo numérico [1, 2] para facil uso en Frontend
+    const proyectosFormatted = proyectos.map(proj => {
+      const permisos = proj.permisos_str 
+        ? proj.permisos_str.split(',').map(Number) 
+        : [];
+      const { permisos_str, ...resto } = proj;
+      return {
+        ...resto,
+        permisos
+      };
+    });
+
     return res.status(200).json({
-      proyectos
+      proyectos: proyectosFormatted
     });
 
   } catch (error) {

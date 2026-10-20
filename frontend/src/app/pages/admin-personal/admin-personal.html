@@ -92,13 +92,13 @@
     <!-- Estados de Carga / Mensajes -->
     @if (cargandoProyectos) {
       <p class="text-gray-500 text-xl font-['Inter'] pt-6">
-        Cargando proyectos del colaborador...
+        Cargando proyectos...
       </p>
     }
 
     @if (!cargandoProyectos && selectedPersonalId && proyectosPersonal.length === 0) {
       <p class="text-gray-500 text-xl font-['Inter'] pt-6">
-        Este colaborador no tiene proyectos asignados actualmente.
+        No esta asignado a ningun proyecto actualmente.
       </p>
     }
 
