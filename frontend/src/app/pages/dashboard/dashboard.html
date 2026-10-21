@@ -111,10 +111,10 @@
               @else if (proyecto.permisos?.includes(1)) {
                 <button 
                   (click)="handleOpenModal(proyecto.Id_proyecto)"
-                  [disabled]="proyecto.estado === 'Finalizado' || proyecto.estado === 'Terminado' || proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))"
+                  [disabled]="proyecto.estado === 'Finalizado' || proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))"
                   class="w-full py-3 bg-[#FF4500] hover:bg-[#E03E00] active:scale-[0.99] rounded-3xl transition-all text-white text-2xl font-semibold font-['Inter'] shadow-sm cursor-pointer text-center block disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:active:scale-100"
                 >
-                  {{ (proyecto.estado === 'Finalizado' || proyecto.estado === 'Terminado' || proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))) ? 'Completado' : 'Registrar Horas' }}
+                  {{ (proyecto.horas_registradas >= ((proyecto.horas_asignadas || 0) + (proyecto.horas_aumentadas || 0))) ? 'Completado' : 'Registrar Horas' }}
                 </button>
               }
 

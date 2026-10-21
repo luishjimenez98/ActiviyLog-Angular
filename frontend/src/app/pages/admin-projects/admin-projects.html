@@ -20,12 +20,22 @@
         >
           Proyectos
         </button>
-        <button 
-          (click)="navigate('/admin/personal')"
-          class="px-6 py-2 text-[#2F3D47] hover:text-[#FF4500] text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"
-        >
-          Personal
-        </button>
+        @if(admin()==true){
+          <button 
+            (click)="navigate('/admin/personal')"
+            class="px-6 py-2 text-[#2F3D47] hover:text-[#FF4500] text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"
+          >
+            Personal
+          </button>
+        }@else{
+          <button 
+            (click)="navigate('/join')"
+            class="px-6 py-2 text-[#2F3D47] hover:text-[#FF4500] text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"
+          >
+            Unirse
+          </button>
+        }
+        
         <button 
           (click)="cerrarSesion()"
           class="px-6 py-2 text-[#2F3D47] hover:text-red-600 text-2xl font-medium transition-colors hover:scale-105 cursor-pointer"

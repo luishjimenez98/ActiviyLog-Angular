@@ -67,17 +67,27 @@ export class AdminProjectsComponent implements OnInit {
     this.selectedProyectoId = null;
   }
 
-  /// Helper para obtener el ID del usuario/admin actual grabado en el login
-private getCurrentUserId(): number | null {
-  const token = localStorage.getItem('token');
-  if (!token) return null;
-
-  try {
-    // Decodificamos el payload (segunda parte del JWT)
+  decode(){
+    const token = localStorage.getItem('token');
+    if (!token) return null;
     const payloadBase64 = token.split('.')[1];
     const decodedJson = atob(payloadBase64);
-    const decoded = JSON.parse(decodedJson);
+    return JSON.parse(decodedJson);
+  }
 
+  admin(){
+    const decoded = this.decode()
+    const admin=decoded.Admin
+    if (admin==true  || admin==1){
+      return true
+    }
+    return false
+  }
+  /// Helper para obtener el ID del usuario/admin actual grabado en el login
+private getCurrentUserId(): number | null {
+  try {
+    // Decodificamos el payload (segunda parte del JWT)
+    const decoded = this.decode()
     return Number(
       decoded.id
     ) || null;
