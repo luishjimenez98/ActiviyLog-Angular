@@ -183,6 +183,7 @@
           </label>
           <input
             type="text"
+            autocomplete="off"
             name="nombreNuevoProyecto"
             [(ngModel)]="nombreNuevoProyecto"
             placeholder="Ej. Sistema Web"
@@ -197,7 +198,9 @@
           </label>
           <input
             type="number"
-            min="1"
+            min="0.5"
+            step="any"
+            autocomplete="off"
             name="horasAsignadasInput"
             [(ngModel)]="horasAsignadasInput"
             placeholder="Ej. 50"

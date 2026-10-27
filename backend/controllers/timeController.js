@@ -3,14 +3,21 @@ import { pool } from '../config/db.js';
 // Añadir horas
 export const addTime = async (req, res) => {
   const { id_proyecto, horas } = req.body;
-  const id_personal = req.user?.id;
+  const id_personal = req.user?.id || req.user?.Id_personal;
+  const isAdmin = Boolean(req.user?.Admin);
 
   if (!id_personal) {
     return res.status(401).json({ error: 'Usuario no autenticado correctamente.' });
   }
 
-  if (!id_proyecto || !horas) {
+  if (!id_proyecto || horas === undefined || horas === null) {
     return res.status(400).json({ error: 'El proyecto y las horas son obligatorios.' });
+  }
+
+  // Validación: Horas deben ser un número finito positivo (se permiten decimales redondeados a 2 dígitos)
+  const nuevasHoras = Math.round(Number(horas) * 100) / 100;
+  if (!Number.isFinite(nuevasHoras) || nuevasHoras <= 0) {
+    return res.status(400).json({ error: 'La cantidad de horas debe ser un número válido mayor a 0.' });
   }
 
   try {
@@ -25,6 +32,18 @@ export const addTime = async (req, res) => {
     }
 
     const id_participacion = participacion[0].Id_participacion;
+
+    // Validación 1.3: Verificar que el usuario tenga permiso activo para registrar horas (Id_permiso = 1)
+    if (!isAdmin) {
+      const [permiso] = await pool.query(
+        'SELECT 1 FROM permisos_proyecto WHERE Id_participacion = ? AND Id_permiso = 1 AND activo = 1',
+        [id_participacion]
+      );
+
+      if (permiso.length === 0) {
+        return res.status(403).json({ error: 'No tienes permisos asignados para registrar horas en este proyecto.' });
+      }
+    }
 
     // 2. Consultar horas totales y actuales del proyecto
     const [[proyecto]] = await pool.query(
@@ -49,7 +68,6 @@ export const addTime = async (req, res) => {
 
     const totalPermitido = Number(proyecto.total_permitido || 0);
     const horasActuales = Number(proyecto.horas_registradas || 0);
-    const nuevasHoras = Number(horas);
 
     if (proyecto.Id_estado === 2 || horasActuales >= totalPermitido) {
       return res.status(400).json({ 
@@ -57,8 +75,10 @@ export const addTime = async (req, res) => {
       });
     }
 
-    if (horasActuales + nuevasHoras > totalPermitido) {
-      const disponibles = totalPermitido - horasActuales;
+    const nuevoTotal = Math.round((horasActuales + nuevasHoras) * 100) / 100;
+
+    if (nuevoTotal > totalPermitido) {
+      const disponibles = Math.round((totalPermitido - horasActuales) * 100) / 100;
       return res.status(400).json({ 
         error: `Las horas ingresadas superan el límite del proyecto. Horas disponibles: ${disponibles}` 
       });
@@ -70,8 +90,8 @@ export const addTime = async (req, res) => {
       [id_participacion, nuevasHoras, new Date()]
     );
 
-    // 4. Si se alcanza el total de horas, actualizar automáticamente el estado a Terminado (Id_estado = 2)
-    if (horasActuales + nuevasHoras === totalPermitido) {
+    // 4. Si se alcanza o supera el total de horas, actualizar automáticamente el estado a Terminado (Id_estado = 2)
+    if (nuevoTotal >= totalPermitido) {
       await pool.query(
         'UPDATE proyectos SET Id_estado = 2 WHERE Id_proyecto = ?',
         [id_proyecto]
@@ -90,12 +110,28 @@ export const addTime = async (req, res) => {
 
 export const getHorasPersonalProyecto = async (req, res) => {
   const { id_personal, id_proyecto } = req.body;
+  const currentUserId = req.user?.id || req.user?.Id_personal;
+  const isAdmin = Boolean(req.user?.Admin);
 
   if (!id_personal || !id_proyecto) {
     return res.status(400).json({ error: 'El ID del personal y del proyecto son obligatorios.' });
   }
 
   try {
+    // Prevención de IDOR (1.5): si no es admin ni es el propio colaborador consultando sus horas,
+    // validar si tiene asignado el rol/permiso de Administrar el proyecto (Id_permiso = 2)
+    if (!isAdmin && Number(currentUserId) !== Number(id_personal)) {
+      const [esAdminProyecto] = await pool.query(
+        `SELECT 1 FROM personal_proyecto pp
+         INNER JOIN permisos_proyecto pr ON pp.Id_participacion = pr.Id_participacion
+         WHERE pp.Id_personal = ? AND pp.Id_proyecto = ? AND pr.Id_permiso = 2 AND pr.activo = 1`,
+        [currentUserId, id_proyecto]
+      );
+
+      if (esAdminProyecto.length === 0) {
+        return res.status(403).json({ error: 'No tienes autorización para consultar el historial de horas de este colaborador.' });
+      }
+    }
     const [registros] = await pool.query(
       `SELECT 
         rh.Id_registro,

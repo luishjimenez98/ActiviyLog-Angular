@@ -10,7 +10,9 @@ import timeRoutes from './routes/timeRoutes.js';
 const allowedOrigins = [
   'http://localhost:4200',
   'http://localhost:3001',
-  'http://activitylog.itecordurango.com'
+  'http://activitylog.itecordurango.com',
+  'https://activitylog.itecordurango.com',
+  'http://localhost:20010'
 ];
 
 dotenv.config();
@@ -30,6 +32,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.get('/', (req, res) => res.json({ status: 'ONLINE' }));
 app.get('/health', (req, res) => res.json({ status: 'ONLINE' }));
 
 app.use('/auth', authRoutes);
@@ -41,7 +44,6 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend corriendo en http://localhost:${PORT}`);
 });
-
 
 
 

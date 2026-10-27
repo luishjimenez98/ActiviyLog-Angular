@@ -9,6 +9,11 @@ export const login = async (req, res) => {
     return res.status(400).json({ error: 'Email y contraseña son obligatorios.' });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(Email)) {
+    return res.status(400).json({ error: 'El formato del correo electrónico debe incluir "@" y ".".' });
+  }
+
   try {
     const [rows] = await pool.query(
       'SELECT Id_personal, Nombre, Apellido_paterno, Admin, Email, Contrasena FROM personal WHERE Email = ?',

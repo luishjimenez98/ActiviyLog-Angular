@@ -41,7 +41,7 @@
   
   <div class="bg-white rounded-2xl border border-neutral-300 p-8 flex flex-col justify-center items-center gap-5 w-full max-w-[700px] shadow-sm">
     
-    <form (ngSubmit)="onSubmit()" class="w-full max-w-[660px] flex flex-col gap-5">
+    <form (ngSubmit)="onSubmit()" autocomplete="off" class="w-full max-w-[660px] flex flex-col gap-5">
       
       <!-- Selector de Proyecto -->
       <div class="flex flex-col gap-2">
@@ -97,6 +97,10 @@
           [(ngModel)]="accessKey"
           placeholder="Ej. 8456"
           required
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
           class="w-full h-14 px-4 bg-slate-50 rounded-[20px] text-neutral-800 placeholder-neutral-400 text-xl font-normal font-['Inter'] focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
       </div>

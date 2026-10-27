@@ -29,6 +29,15 @@ export const createPersonal = async (req, res) => {
     return res.status(400).json({ error: 'Los campos obligatorios deben ser completados.' });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(Email)) {
+    return res.status(400).json({ error: 'El formato del correo electrónico no es válido (debe incluir "@" y ".").' });
+  }
+
+  if (Telefono && !/^\d{10}$/.test(Telefono)) {
+    return res.status(400).json({ error: 'El teléfono debe contener exactamente 10 dígitos numéricos.' });
+  }
+
   try {
     // 1. Verificar si el email ya existe
     const [existingPersonal] = await pool.query(

@@ -3,6 +3,8 @@ import { pool } from '../config/db.js';
 //Ver proyectos
 export const getProject = async (req, res) => {
   const { id_proyecto } = req.body || {};
+  const userId = req.user?.id || req.user?.Id_personal;
+  const isAdmin = Boolean(req.user?.Admin);
 
   try {
 
@@ -34,8 +36,26 @@ export const getProject = async (req, res) => {
         return res.status(404).json({ message: 'Proyecto no encontrado.' });
       }
 
+      const proyectoData = { ...proyecto[0] };
+
+      // Protección del código de acceso (1.1): sólo administradores globales o administradores del proyecto pueden verlo
+      let tienePermisoAdminProyecto = false;
+      if (!isAdmin && userId) {
+        const [permisoAdmin] = await pool.query(
+          `SELECT 1 FROM personal_proyecto pp
+           INNER JOIN permisos_proyecto pr ON pp.Id_participacion = pr.Id_participacion
+           WHERE pp.Id_personal = ? AND pp.Id_proyecto = ? AND pr.Id_permiso = 2 AND pr.activo = 1`,
+          [userId, id_proyecto]
+        );
+        tienePermisoAdminProyecto = permisoAdmin.length > 0;
+      }
+
+      if (!isAdmin && !tienePermisoAdminProyecto) {
+        delete proyectoData.codigo_acceso;
+      }
+
       return res.status(200).json({
-        proyecto: proyecto[0]
+        proyecto: proyectoData
       });
     }
     const [proyectos] = await pool.query(
@@ -121,7 +141,7 @@ export const createProject = async(req, res) =>{
     });
 
   } catch (error) {
-    console.error('Error al crear usuario:', error);
+    console.error('Error al crear el proyecto:', error);
     return res.status(500).json({ error: 'Error al registrar el proyecto en la base de datos.' });
   }
 };
@@ -191,8 +211,16 @@ export const joinProject = async (req, res) => {
 // Ver proyectos por personal
 export const getProjectPersonal = async (req, res) => {
   let { id_personal } = req.body;
+  const currentUserId = req.user?.id || req.user?.Id_personal;
+  const isAdmin = Boolean(req.user?.Admin);
+
+  // Prevención de IDOR (1.5): si no es admin y solicita consultar proyectos de otro usuario, denegar acceso
+  if (!isAdmin && id_personal && Number(id_personal) !== Number(currentUserId)) {
+    return res.status(403).json({ error: 'No tienes autorización para consultar los proyectos de otro usuario.' });
+  }
+
   if (!id_personal) {
-    id_personal = req.user?.id_personal || req.user?.Id_personal || req.user?.id;
+    id_personal = currentUserId;
   }
 
   try {

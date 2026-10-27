@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { verifyAdmin,verifyToken } from '../middlewares/authmiddleware.js';
-import { getPersonal,createPersonal, getPersonalProject, getPermisos,crearPermisos,getPersonalProyectoPermisos,updatePermisosPersonal } from '../controllers/personalController.js';
+import { getPersonal,createPersonal, getPersonalProject, getPermisos,getPersonalProyectoPermisos,updatePermisosPersonal } from '../controllers/personalController.js';
 
 const router = Router();
 

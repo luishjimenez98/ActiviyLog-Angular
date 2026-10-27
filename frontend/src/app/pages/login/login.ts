@@ -25,6 +25,13 @@ export class LoginComponent {
       return;
     }
 
+    const emailLimpio = this.email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailLimpio)) {
+      this.errorMessage = 'Por favor, ingresa un correo electrónico válido.';
+      return;
+    }
+
     this.cargando = true;
     this.errorMessage = '';
 
@@ -32,10 +39,6 @@ export class LoginComponent {
     this.authService.login({ Email: this.email, Contrasena: this.password }).subscribe({
       next: (res) => {
         this.cargando = false;
-        console.log('Respuesta del servidor:', res);
-        
-        
-
         //Guardar token 
         localStorage.setItem('token', res.token);
 

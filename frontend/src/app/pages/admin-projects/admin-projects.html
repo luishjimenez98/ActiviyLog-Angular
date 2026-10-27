@@ -235,9 +235,11 @@
           <label class="text-zinc-600 text-lg font-medium">Horas a registrar</label>
           <input 
             type="number" 
+            step="any"
+            min="0.01"
             [(ngModel)]="horasInput" 
-            placeholder="Ej. 8"
-            min="1"
+            placeholder="Ej. 2.5"
+            autocomplete="off"
             class="w-full h-14 px-4 rounded-2xl border border-gray-300 focus:outline-none focus:border-[#FF4500] text-xl"
           />
         </div>
@@ -327,6 +329,10 @@
                 (input)="onCodigoInput($event)"
                 placeholder="1234"
                 maxlength="4"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
                 class="w-full h-11 px-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-base font-medium tracking-widest"
               />
             </div>
@@ -336,6 +342,7 @@
               <label class="text-zinc-500 text-sm font-normal">Horas asignadas iniciales</label>
               <input 
                 type="number" 
+                step="any"
                 [(ngModel)]="editForm.horas_asignadas" 
                 min="0"
                 class="w-full h-11 px-3 bg-white rounded-lg border border-gray-300 focus:outline-none focus:border-[#FF4500] text-zinc-800 text-base font-medium"
@@ -347,6 +354,7 @@
               <label class="text-zinc-500 text-sm font-normal">Aumentar horas extras</label>
               <input 
                 type="number" 
+                step="any"
                 [(ngModel)]="editForm.horas_aumentadas" 
                 min="0"
                 placeholder="0"

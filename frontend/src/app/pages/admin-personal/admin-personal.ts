@@ -136,6 +136,13 @@ handleCloseRegisterModal() {
   this.isRegisterModalOpen = false;
 }
 
+// Restringe el teléfono a solo números y máximo 10 dígitos en tiempo real
+onTelefonoInput(event: Event) {
+  const input = event.target as HTMLInputElement;
+  input.value = input.value.replace(/\D/g, '').slice(0, 10);
+  this.registerForm.telefono = input.value;
+}
+
 handleRegisterPersonal() {
   if (
     !this.registerForm.nombre.trim() || 
@@ -144,6 +151,20 @@ handleRegisterPersonal() {
     !this.registerForm.contrasena.trim()
   ) {
     this.registerModalError = 'Por favor completa los campos obligatorios.';
+    return;
+  }
+
+  // Validación de email: requiere '@' y '.'
+  const emailLimpio = this.registerForm.email.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(emailLimpio)) {
+    this.registerModalError = 'Por favor ingresa un correo electrónico válido.';
+    return;
+  }
+
+  // Validación de teléfono: solo números y máximo 10 dígitos (si se ingresa)
+  if (this.registerForm.telefono && this.registerForm.telefono.length !== 10) {
+    this.registerModalError = 'Por favor ingresa un numero telefonico válido.';
     return;
   }
 

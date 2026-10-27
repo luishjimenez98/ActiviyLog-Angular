@@ -157,10 +157,12 @@
           </label>
           <input
             type="number"
-            min="1"
+            step="any"
+            min="0.01"
             name="horasInput"
             [(ngModel)]="horasInput"
-            placeholder="Ej. 5"
+            placeholder="Ej. 2.5"
+            autocomplete="off"
             class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-xl font-['Inter'] outline-none focus:border-orange-500 transition-colors"
           />
         </div>

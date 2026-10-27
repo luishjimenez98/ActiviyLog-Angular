@@ -206,6 +206,7 @@
             type="email" 
             [(ngModel)]="registerForm.email" 
             placeholder="correo@ejemplo.com"
+            autocomplete="off"
             class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
           />
         </div>
@@ -217,17 +218,21 @@
             type="password" 
             [(ngModel)]="registerForm.contrasena" 
             placeholder="••••••••"
+            autocomplete="new-password"
             class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
           />
         </div>
 
-        <!-- 6. Teléfono (Full Width) -->
+        <!-- 6. Teléfono (Full Width: Solo números y máximo 10 dígitos) -->
         <div class="flex flex-col gap-2 md:col-span-2">
           <label class="text-black text-xl font-normal">Teléfono</label>
           <input 
             type="tel" 
-            [(ngModel)]="registerForm.telefono" 
+            [value]="registerForm.telefono"
+            (input)="onTelefonoInput($event)"
+            maxlength="10"
             placeholder="Ej. 6181234567"
+            autocomplete="off"
             class="w-full h-14 px-4 bg-slate-50 rounded-[20px] border border-slate-200 text-black text-lg outline-none focus:border-orange-500 transition-colors"
           />
         </div>

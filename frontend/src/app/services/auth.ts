@@ -1,17 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
-  providedIn: 'root' // Hace que el servicio esté disponible en toda la app
+  providedIn: 'root'
 })
 export class AuthService {
-  // Inyectamos el cliente HTTP de Angular
   private http = inject(HttpClient);
-
-  private API_URL = 'http://localhost:3001'; 
+  private apiUrl = environment.apiUrl;
 
   login(credentials: { Email: string; Contrasena: string }): Observable<any> {
-    return this.http.post(`${this.API_URL}/auth/login`, credentials);
+    return this.http.post(`${this.apiUrl}/auth/login`, credentials);
   }
 }

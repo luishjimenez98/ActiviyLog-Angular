@@ -11,11 +11,25 @@ export const adminGuard: CanActivateFn = (route, state) => {
   }
 
   try {
-    // Decodificar el payload Base64 del JWT
-    const payloadBase64 = token.split('.')[1];
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      localStorage.removeItem('token');
+      router.navigate(['/login']);
+      return false;
+    }
+
+    // Decodificar Base64URL de forma segura
+    const payloadBase64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
     const decodedPayload = JSON.parse(atob(payloadBase64));
 
-    // Revisar 'admin' o 'Admin' en el payload decodificado
+    // Validar expiración del token (2.2): 'exp' viene en segundos según el estándar JWT
+    if (decodedPayload.exp && Date.now() >= decodedPayload.exp * 1000) {
+      localStorage.removeItem('token');
+      router.navigate(['/login']);
+      return false;
+    }
+
+    // Revisar si es Administrador
     const isAdmin = decodedPayload.Admin === true;
 
     if (isAdmin) {
@@ -23,9 +37,12 @@ export const adminGuard: CanActivateFn = (route, state) => {
     }
   } catch (error) {
     console.error('Error al validar token en Guard:', error);
+    localStorage.removeItem('token');
+    router.navigate(['/login']);
+    return false;
   }
 
-  // Si no es admin o el token es inválido, redirigir al dashboard normal
+  // Si el token es válido pero el usuario no es admin, redirigir al dashboard normal
   router.navigate(['/dashboard']);
   return false;
 };
